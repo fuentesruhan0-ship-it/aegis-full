@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Display name shown on the map marker"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Latitude of the user"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Longitude of the user"
+    },
+    "location_label": {
+      "type": "string",
+      "description": "Human-readable location"
+    },
+    "emoji": {
+      "type": "string",
+      "default": "\ud83e\uddcd",
+      "description": "Emoji avatar shown on the map for this user"
+    }
+  },
+  "required": [
+    "location_lat",
+    "location_lng"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "UserLocation",
+  "type": "object"
+}

@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Shield, LayoutDashboard, Siren, Home, Users, Phone, Bot,
-  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, ChevronRight
+  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, ChevronRight, MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { to: "/household", label: "My Household", icon: Home, roles: ["resident", "student", "admin"] },
   { to: "/contacts", label: "Emergency Contacts", icon: Phone, roles: ["resident", "student", "admin"] },
   { to: "/assistant", label: "AI Assistant", icon: Bot, roles: null },
+  { to: "/map", label: "Community Map", icon: MapPin, roles: null },
   { to: "/hazards", label: "Hazard Reports", icon: AlertTriangle, roles: null },
   { to: "/announcements", label: "Announcements", icon: Megaphone, roles: null },
   { to: "/profile", label: "Profile & Settings", icon: UserCircle, roles: null },

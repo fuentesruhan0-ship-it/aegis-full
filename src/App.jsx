@@ -21,6 +21,7 @@ import Assistant from '@/pages/Assistant';
 import HazardReports from '@/pages/HazardReports';
 import Announcements from '@/pages/Announcements';
 import Profile from '@/pages/Profile';
+import CommunityMap from '@/pages/CommunityMap';
 import { Navigate } from 'react-router-dom';
 
 const AuthenticatedApp = () => {
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
           <Route path="/hazards" element={<HazardReports />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/map" element={<CommunityMap />} />
         </Route>
       </Route>
 
