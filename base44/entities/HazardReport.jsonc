@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "cracked_road",
+        "landslide",
+        "fire",
+        "gas_leak",
+        "structural_damage",
+        "flood",
+        "other"
+      ],
+      "description": "Type of hazard reported"
+    },
+    "description": {
+      "type": "string",
+      "description": "Details of the hazard"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Latitude of the hazard"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Longitude of the hazard"
+    },
+    "location_label": {
+      "type": "string",
+      "description": "Human-readable location of the hazard"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Severity of the hazard"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "verified",
+        "resolved"
+      ],
+      "default": "reported",
+      "description": "Verification status of the report"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional photo of the hazard"
+    }
+  },
+  "required": [
+    "type",
+    "description"
+  ],
+  "name": "HazardReport",
+  "type": "object"
+}

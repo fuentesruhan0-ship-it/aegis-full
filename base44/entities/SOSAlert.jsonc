@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "household_id": {
+      "type": "string",
+      "description": "Household associated with the SOS alert"
+    },
+    "message": {
+      "type": "string",
+      "description": "Message sent with the SOS"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Latitude at time of SOS"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Longitude at time of SOS"
+    },
+    "location_label": {
+      "type": "string",
+      "description": "Human-readable location"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "acknowledged",
+        "resolved"
+      ],
+      "default": "active",
+      "description": "Current status of the SOS alert"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "name": "SOSAlert",
+  "type": "object"
+}

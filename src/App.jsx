@@ -7,6 +7,21 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AppLayout from '@/components/AppLayout';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import Home from '@/pages/Home';
+import SOS from '@/pages/SOS';
+import Household from '@/pages/Household';
+import EmergencyContacts from '@/pages/EmergencyContacts';
+import Assistant from '@/pages/Assistant';
+import HazardReports from '@/pages/HazardReports';
+import Announcements from '@/pages/Announcements';
+import Profile from '@/pages/Profile';
+import { Navigate } from 'react-router-dom';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -34,7 +49,26 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      {/* Auth routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Authenticated app routes */}
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/sos" element={<SOS />} />
+          <Route path="/household" element={<Household />} />
+          <Route path="/contacts" element={<EmergencyContacts />} />
+          <Route path="/assistant" element={<Assistant />} />
+          <Route path="/hazards" element={<HazardReports />} />
+          <Route path="/announcements" element={<Announcements />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+      </Route>
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

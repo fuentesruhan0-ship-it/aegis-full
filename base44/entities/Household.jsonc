@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Household / family group name"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address of the household"
+    },
+    "meeting_point": {
+      "type": "string",
+      "description": "Agreed evacuation meeting point"
+    },
+    "evacuation_plan": {
+      "type": "string",
+      "description": "Step-by-step household evacuation plan"
+    },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs of all household members"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "name": "Household",
+  "type": "object"
+}

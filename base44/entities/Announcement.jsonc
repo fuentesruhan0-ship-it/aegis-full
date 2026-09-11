@@ -1,0 +1,52 @@
+{
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Announcement title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Announcement body"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "verified_advisory",
+        "community",
+        "drill",
+        "recovery_update"
+      ],
+      "default": "community",
+      "description": "Type of announcement"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ],
+      "default": "info",
+      "description": "Priority level of the announcement"
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "residents",
+        "responders",
+        "volunteers",
+        "lgus"
+      ],
+      "default": "all",
+      "description": "Intended audience"
+    }
+  },
+  "required": [
+    "title",
+    "content",
+    "type"
+  ],
+  "name": "Announcement",
+  "type": "object"
+}

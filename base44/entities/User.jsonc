@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the AEGIS system",
+      "enum": [
+        "admin",
+        "resident",
+        "student",
+        "lgu",
+        "drrmo",
+        "volunteer",
+        "responder"
+      ],
+      "default": "resident"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "household_id": {
+      "type": "string",
+      "description": "ID of the household this user belongs to"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address of the user"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Last known latitude"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Last known longitude"
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "name": "User",
+  "type": "object"
+}

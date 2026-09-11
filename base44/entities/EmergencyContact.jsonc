@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "household_id": {
+      "type": "string",
+      "description": "Household this contact belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Contact name"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "Relationship to household (e.g. parent, sibling, neighbor)"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "secondary",
+        "tertiary"
+      ],
+      "default": "secondary",
+      "description": "Contact priority for SOS notifications"
+    }
+  },
+  "required": [
+    "household_id",
+    "name",
+    "phone"
+  ],
+  "name": "EmergencyContact",
+  "type": "object"
+}

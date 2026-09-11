@@ -1,0 +1,40 @@
+{
+  "properties": {
+    "household_id": {
+      "type": "string",
+      "description": "Household this check-in belongs to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "safe",
+        "need_help",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Safety status of the household member"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Latitude at time of check-in"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Longitude at time of check-in"
+    },
+    "location_label": {
+      "type": "string",
+      "description": "Human-readable location"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional message from the member"
+    }
+  },
+  "required": [
+    "household_id",
+    "status"
+  ],
+  "name": "SafetyCheckIn",
+  "type": "object"
+}
