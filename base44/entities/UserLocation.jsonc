@@ -20,6 +20,10 @@
       "type": "string",
       "default": "\ud83e\uddcd",
       "description": "Emoji avatar shown on the map for this user"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Optional photo avatar shown on the map instead of emoji"
     }
   },
   "required": [

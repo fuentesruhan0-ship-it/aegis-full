@@ -55,7 +55,7 @@ export default function Announcements() {
 
   const loadData = useCallback(async () => {
     try {
-      const list = await base44.entities.Announcement.list("-created_date", 50);
+      const list = await base44.entities.Announcement.list("-created_date", 500);
       setAnnouncements(list || []);
     } catch (e) {
       console.error(e);
@@ -66,6 +66,10 @@ export default function Announcements() {
 
   useEffect(() => {
     loadData();
+    const unsub = base44.entities.Announcement.subscribe(() => {
+      loadData();
+    });
+    return unsub;
   }, [loadData]);
 
   const submit = async () => {

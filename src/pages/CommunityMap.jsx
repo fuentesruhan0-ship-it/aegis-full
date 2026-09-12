@@ -9,7 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import {
-  MapPin, Share2, Loader2, Users, Crosshair, Navigation, Eye, EyeOff, Smile
+  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2
 } from "lucide-react";
 
 const TUPI_CENTER = [6.2356, 125.0286];
@@ -44,6 +44,20 @@ function createEmojiIcon(emoji, isMe) {
   });
 }
 
+function createPhotoIcon(url, isMe) {
+  return L.divIcon({
+    html: `<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;border:3px solid ${isMe ? "#2563eb" : "white"};box-shadow:0 2px 8px rgba(0,0,0,0.35);"><img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>`,
+    className: "aegis-photo-marker",
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  });
+}
+
+function getMarkerIcon(loc, isMe) {
+  if (loc.avatar_url) return createPhotoIcon(loc.avatar_url, isMe);
+  return createEmojiIcon(loc.emoji || "🧍", isMe);
+}
+
 function timeAgo(dateStr) {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -72,9 +86,12 @@ export default function CommunityMap() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [emoji, setEmoji] = useState("🧍");
-  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [listOpen, setListOpen] = useState(true);
   const [flyTrigger, setFlyTrigger] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const mapRef = useRef(null);
 
   const loadLocations = useCallback(async () => {
@@ -84,6 +101,7 @@ export default function CommunityMap() {
       const mine = (list || []).find((l) => l.created_by_id === user?.id);
       setMyLocation(mine);
       if (mine?.emoji) setEmoji(mine.emoji);
+      if (mine?.avatar_url) setAvatarUrl(mine.avatar_url);
     } catch (e) {
       console.error(e);
     } finally {
@@ -109,23 +127,19 @@ export default function CommunityMap() {
       }
       const label = await reverseGeocode(pos.lat, pos.lng);
       const name = user?.full_name || user?.email || "User";
+      const payload = {
+        location_lat: pos.lat,
+        location_lng: pos.lng,
+        location_label: label,
+        emoji,
+        avatar_url: avatarUrl,
+        full_name: name,
+      };
       if (myLocation) {
-        const updated = await base44.entities.UserLocation.update(myLocation.id, {
-          location_lat: pos.lat,
-          location_lng: pos.lng,
-          location_label: label,
-          emoji,
-          full_name: name,
-        });
+        const updated = await base44.entities.UserLocation.update(myLocation.id, payload);
         setMyLocation(updated);
       } else {
-        const created = await base44.entities.UserLocation.create({
-          location_lat: pos.lat,
-          location_lng: pos.lng,
-          location_label: label,
-          emoji,
-          full_name: name,
-        });
+        const created = await base44.entities.UserLocation.create(payload);
         setMyLocation(created);
       }
       try { await base44.auth.updateMe({ location_lat: pos.lat, location_lng: pos.lng }); } catch (e) { /* non-critical */ }
@@ -139,10 +153,40 @@ export default function CommunityMap() {
 
   const updateEmoji = async (newEmoji) => {
     setEmoji(newEmoji);
-    setEmojiOpen(false);
+    setAvatarUrl(null);
+    setAvatarOpen(false);
     if (myLocation) {
       try {
-        const updated = await base44.entities.UserLocation.update(myLocation.id, { emoji: newEmoji });
+        const updated = await base44.entities.UserLocation.update(myLocation.id, { emoji: newEmoji, avatar_url: null });
+        setMyLocation(updated);
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  const uploadPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      setAvatarUrl(file_url);
+      if (myLocation) {
+        const updated = await base44.entities.UserLocation.update(myLocation.id, { avatar_url: file_url });
+        setMyLocation(updated);
+      }
+      setAvatarOpen(false);
+    } catch (err) {
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = async () => {
+    setAvatarUrl(null);
+    if (myLocation) {
+      try {
+        const updated = await base44.entities.UserLocation.update(myLocation.id, { avatar_url: null });
         setMyLocation(updated);
       } catch (e) { console.error(e); }
     }
@@ -170,7 +214,6 @@ export default function CommunityMap() {
 
   return (
     <div className="relative h-[calc(100vh-3.5rem)] lg:h-screen">
-      {/* Map */}
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}
@@ -189,12 +232,12 @@ export default function CommunityMap() {
             <Marker
               key={loc.id}
               position={[loc.location_lat, loc.location_lng]}
-              icon={createEmojiIcon(loc.emoji || "🧍", isMe)}
+              icon={getMarkerIcon(loc, isMe)}
             >
               <Popup>
                 <div style={{ minWidth: 160 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-                    {loc.emoji || "🧍"} {loc.full_name || "Community member"}{isMe ? " (you)" : ""}
+                    {loc.avatar_url ? "📸" : (loc.emoji || "🧍")} {loc.full_name || "Community member"}{isMe ? " (you)" : ""}
                   </div>
                   {loc.location_label && (
                     <div style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>
@@ -231,10 +274,10 @@ export default function CommunityMap() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setEmojiOpen(true)}
+                onClick={() => setAvatarOpen(true)}
                 className="hidden sm:flex"
               >
-                <span className="text-lg leading-none">{emoji}</span>
+                {avatarUrl ? <Camera className="mr-1 h-4 w-4" /> : <span className="text-lg leading-none">{emoji}</span>}
                 <Smile className="ml-1 h-4 w-4 text-slate-400" />
               </Button>
             )}
@@ -302,7 +345,11 @@ export default function CommunityMap() {
                           }}
                           className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-slate-50"
                         >
-                          <span className="text-2xl leading-none">{loc.emoji || "🧍"}</span>
+                          {loc.avatar_url ? (
+                            <img src={loc.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-slate-200" />
+                          ) : (
+                            <span className="text-2xl leading-none">{loc.emoji || "🧍"}</span>
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-900">
                               {loc.full_name || "Community member"}{isMe && <span className="text-xs text-blue-600"> (you)</span>}
@@ -337,32 +384,71 @@ export default function CommunityMap() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setEmojiOpen(true)}
-            className="h-10 w-10 rounded-full border-slate-200 bg-white text-lg shadow-md"
+            onClick={() => setAvatarOpen(true)}
+            className="h-10 w-10 rounded-full border-slate-200 bg-white shadow-md"
           >
-            {emoji}
+            {avatarUrl ? <Camera className="h-5 w-5 text-blue-600" /> : <span className="text-lg">{emoji}</span>}
           </Button>
         </div>
       )}
 
-      {/* Emoji picker dialog */}
-      <Dialog open={emojiOpen} onOpenChange={setEmojiOpen}>
-        <DialogContent className="sm:max-w-xs">
+      {/* Avatar picker dialog (emoji or photo) */}
+      <Dialog open={avatarOpen} onOpenChange={setAvatarOpen}>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Choose your map avatar</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-8 gap-2 py-2">
-            {EMOJI_CHOICES.map((e) => (
-              <button
-                key={e}
-                onClick={() => updateEmoji(e)}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg text-2xl transition-all hover:bg-slate-100 ${
-                  emoji === e ? "bg-blue-100 ring-2 ring-blue-400" : ""
-                }`}
+          <div className="py-2">
+            <p className="mb-2 text-xs font-medium text-slate-500">Upload a photo of yourself</p>
+            <div className="mb-4 flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={uploadPhoto}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex-1"
               >
-                {e}
-              </button>
-            ))}
+                {uploading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading...</>
+                ) : avatarUrl ? (
+                  <><Camera className="mr-2 h-4 w-4" />Change photo</>
+                ) : (
+                  <><Camera className="mr-2 h-4 w-4" />Upload photo</>
+                )}
+              </Button>
+              {avatarUrl && (
+                <>
+                  <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-blue-400" />
+                  <Button variant="ghost" size="icon" onClick={removePhoto} title="Remove photo">
+                    <Trash2 className="h-4 w-4 text-rose-500" />
+                  </Button>
+                </>
+              )}
+            </div>
+            <div className="my-3 flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs text-slate-400">or pick an emoji</span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+            <div className="grid grid-cols-8 gap-2">
+              {EMOJI_CHOICES.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => updateEmoji(e)}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg text-2xl transition-all hover:bg-slate-100 ${
+                    emoji === e && !avatarUrl ? "bg-blue-100 ring-2 ring-blue-400" : ""
+                  }`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
           </div>
           {myLocation && (
             <DialogFooter className="flex-col gap-2 sm:flex-col">

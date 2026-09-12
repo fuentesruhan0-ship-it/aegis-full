@@ -37,6 +37,15 @@ function getLocation() {
   });
 }
 
+function reverseGeocode(lat, lng) {
+  return fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`
+  )
+    .then((r) => r.json())
+    .then((d) => d?.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+    .catch(() => `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+}
+
 const STATUS_CONFIG = {
   safe: { label: "Safe", icon: CheckCircle2, color: "emerald", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200" },
   need_help: { label: "Needs Help", icon: AlertCircle, color: "rose", bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200" },
@@ -90,6 +99,33 @@ export default function Household() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const detectLocation = async () => {
+    try {
+      const loc = await getLocation();
+      if (!loc) {
+        alert("Unable to detect your location. Please allow location access.");
+        return;
+      }
+      const label = await reverseGeocode(loc.lat, loc.lng);
+      setForm((f) => ({ ...f, address: label }));
+    } catch (e) {
+      alert("Failed to detect location: " + e.message);
+    }
+  };
+
+  useEffect(() => {
+    if (createOpen && user?.id) {
+      (async () => {
+        try {
+          const myLocs = await base44.entities.UserLocation.filter({ created_by_id: user.id });
+          if (myLocs.length > 0 && myLocs[0].location_label) {
+            setForm((f) => (f.address ? f : { ...f, address: myLocs[0].location_label }));
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    }
+  }, [createOpen, user?.id]);
 
   const createHousehold = async () => {
     if (!form.name.trim()) return;
@@ -180,6 +216,7 @@ export default function Household() {
           form={form}
           setForm={setForm}
           onCreate={createHousehold}
+          onDetectLocation={detectLocation}
         />
       </div>
     );
@@ -373,7 +410,7 @@ export default function Household() {
   );
 }
 
-function CreateDialog({ open, onOpenChange, form, setForm, onCreate }) {
+function CreateDialog({ open, onOpenChange, form, setForm, onCreate, onDetectLocation }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -395,12 +432,19 @@ function CreateDialog({ open, onOpenChange, form, setForm, onCreate }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="hh-address">Home address</Label>
-            <Input
-              id="hh-address"
-              placeholder="Street, barangay, city"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="hh-address"
+                placeholder="Street, barangay, city"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                className="flex-1"
+              />
+              <Button type="button" variant="outline" size="icon" onClick={onDetectLocation} title="Detect my location">
+                <MapPin className="h-4 w-4 text-blue-600" />
+              </Button>
+            </div>
+            <p className="text-xs text-slate-400">Tap the pin to auto-fill from your current location.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="hh-meeting">Meeting point</Label>

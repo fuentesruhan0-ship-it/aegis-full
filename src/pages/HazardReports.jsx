@@ -79,7 +79,7 @@ export default function HazardReports() {
 
   const loadData = useCallback(async () => {
     try {
-      const list = await base44.entities.HazardReport.list("-created_date", 50);
+      const list = await base44.entities.HazardReport.list("-created_date", 500);
       setReports(list || []);
     } catch (e) {
       console.error(e);
@@ -90,6 +90,10 @@ export default function HazardReports() {
 
   useEffect(() => {
     loadData();
+    const unsub = base44.entities.HazardReport.subscribe(() => {
+      loadData();
+    });
+    return unsub;
   }, [loadData]);
 
   const submit = async () => {
