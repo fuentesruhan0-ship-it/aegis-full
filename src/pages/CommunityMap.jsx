@@ -223,8 +223,8 @@ export default function CommunityMap() {
         className="z-0"
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution='Tiles &copy; Esri &mdash; Source: Esri, Earthstar Geographics'
         />
         {locations.map((loc) => {
           const isMe = loc.created_by_id === user?.id;
