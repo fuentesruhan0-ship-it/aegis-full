@@ -235,18 +235,48 @@ export default function CommunityMap() {
               icon={getMarkerIcon(loc, isMe)}
             >
               <Popup>
-                <div style={{ minWidth: 160 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-                    {loc.avatar_url ? "📸" : (loc.emoji || "🧍")} {loc.full_name || "Community member"}{isMe ? " (you)" : ""}
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    {loc.avatar_url ? (
+                      <img src={loc.avatar_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.7)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }} />
+                    ) : (
+                      <span style={{ fontSize: 26, lineHeight: 1 }}>{loc.emoji || "🧍"}</span>
+                    )}
+                    <span style={{ fontWeight: 600, fontSize: 14, color: "#1e293b" }}>
+                      {loc.full_name || "Community member"}{isMe ? " (you)" : ""}
+                    </span>
                   </div>
                   {loc.location_label && (
-                    <div style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>
-                      📍 {loc.location_label}
+                    <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4, display: "flex", alignItems: "flex-start", gap: 4 }}>
+                      <span style={{ flexShrink: 0 }}>📍</span>
+                      <span>{loc.location_label}</span>
                     </div>
                   )}
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: isMe ? 8 : 0 }}>
                     Updated {timeAgo(loc.updated_date || loc.created_date)}
                   </div>
+                  {isMe && (
+                    <button
+                      onClick={() => setAvatarOpen(true)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        border: "1px solid rgba(59,130,246,0.3)",
+                        background: "rgba(59,130,246,0.1)",
+                        color: "#2563eb",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                      }}
+                    >
+                      ✏️ Edit avatar
+                    </button>
+                  )}
                 </div>
               </Popup>
             </Marker>
@@ -257,7 +287,7 @@ export default function CommunityMap() {
 
       {/* Top bar overlay */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] p-3 sm:p-4">
-        <div className="pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border border-white/40 bg-white/55 p-3 shadow-lg backdrop-blur">
+        <div className="pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl glass-cinematic p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
               <MapPin className="h-5 w-5" />
@@ -307,7 +337,7 @@ export default function CommunityMap() {
       {/* Not sharing banner */}
       {!myLocation && !loading && !sharing && (
         <div className="pointer-events-none absolute inset-x-0 top-20 z-[1000] flex justify-center px-4">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-white/40 bg-white/40 px-4 py-3 shadow-md backdrop-blur">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-xl glass-cinematic px-4 py-3">
             <Users className="h-5 w-5 shrink-0 text-blue-600" />
             <p className="text-sm text-blue-800">
               You're not on the map yet. Share your location to let your household and community see you.
@@ -319,7 +349,7 @@ export default function CommunityMap() {
       {/* User list panel */}
       {locations.length > 0 && (
         <div className="absolute bottom-0 left-0 z-[1000] w-full sm:w-80">
-          <div className="m-3 overflow-hidden rounded-2xl border border-white/40 bg-white/55 shadow-lg backdrop-blur">
+          <div className="m-3 overflow-hidden rounded-2xl glass-cinematic">
             <button
               onClick={() => setListOpen(!listOpen)}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
