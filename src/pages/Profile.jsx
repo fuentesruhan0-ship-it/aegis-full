@@ -106,7 +106,7 @@ export default function Profile() {
       <PageHeader title="Profile & Settings" description="Manage your role and household" icon={UserCircle} />
 
       {/* Role & contact */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="mb-4 text-base font-semibold text-slate-900">Your role & contact info</h2>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -146,7 +146,7 @@ export default function Profile() {
       </div>
 
       {/* Household */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
           <HomeIcon className="h-5 w-5 text-emerald-600" />
           Household
@@ -157,7 +157,7 @@ export default function Profile() {
           </div>
         ) : household ? (
           <div>
-            <div className="rounded-xl bg-emerald-50 p-4">
+            <div className="rounded-xl bg-emerald-50/60 p-4 backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
                   <Users className="h-5 w-5" />

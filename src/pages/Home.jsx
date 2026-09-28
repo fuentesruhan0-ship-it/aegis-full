@@ -83,7 +83,7 @@ export default function Home() {
 
       {/* Setup banner */}
       {needsSetup && !loading && (
-        <div className="mb-8 overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-sky-50 p-6">
+        <div className="mb-8 overflow-hidden rounded-2xl border border-white/40 bg-white/40 backdrop-blur-xl backdrop-saturate-150 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/30">
@@ -108,7 +108,7 @@ export default function Home() {
       {/* Quick actions */}
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Link to="/sos">
-          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-rose-200 bg-white p-5 transition-all hover:border-rose-400 hover:shadow-md">
+          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-rose-200 bg-white/55 p-5 backdrop-blur-xl backdrop-saturate-150 transition-all hover:border-rose-400 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 transition-transform group-hover:scale-110">
               <Siren className="h-6 w-6" />
             </div>
@@ -116,7 +116,7 @@ export default function Home() {
           </div>
         </Link>
         <Link to="/household">
-          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-emerald-200 bg-white p-5 transition-all hover:border-emerald-400 hover:shadow-md">
+          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-emerald-200 bg-white/55 p-5 backdrop-blur-xl backdrop-saturate-150 transition-all hover:border-emerald-400 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 transition-transform group-hover:scale-110">
               <ShieldCheck className="h-6 w-6" />
             </div>
@@ -124,7 +124,7 @@ export default function Home() {
           </div>
         </Link>
         <Link to="/assistant">
-          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-indigo-200 bg-white p-5 transition-all hover:border-indigo-400 hover:shadow-md">
+          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-indigo-200 bg-white/55 p-5 backdrop-blur-xl backdrop-saturate-150 transition-all hover:border-indigo-400 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-transform group-hover:scale-110">
               <Bot className="h-6 w-6" />
             </div>
@@ -132,7 +132,7 @@ export default function Home() {
           </div>
         </Link>
         <Link to="/hazards">
-          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-amber-200 bg-white p-5 transition-all hover:border-amber-400 hover:shadow-md">
+          <div className="group flex flex-col items-center gap-2 rounded-2xl border border-amber-200 bg-white/55 p-5 backdrop-blur-xl backdrop-saturate-150 transition-all hover:border-amber-400 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition-transform group-hover:scale-110">
               <AlertTriangle className="h-6 w-6" />
             </div>
@@ -175,7 +175,7 @@ export default function Home() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent announcements */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-white/40 bg-white/55 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl backdrop-saturate-150">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <Megaphone className="h-4 w-4 text-slate-400" />
@@ -188,7 +188,7 @@ export default function Home() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100" />
+                <div key={i} className="h-16 animate-pulse rounded-lg bg-white/30" />
               ))}
             </div>
           ) : announcements.length === 0 ? (
@@ -199,7 +199,7 @@ export default function Home() {
                 <li key={ann.id}>
                   <Link
                     to="/announcements"
-                    className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-slate-50"
+                    className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-white/30"
                   >
                     <span
                       className={`mt-0.5 inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ${
@@ -223,7 +223,7 @@ export default function Home() {
         </div>
 
         {/* Active alerts */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-white/40 bg-white/55 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl backdrop-saturate-150">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <Siren className="h-4 w-4 text-rose-500" />
@@ -236,7 +236,7 @@ export default function Home() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100" />
+                <div key={i} className="h-16 animate-pulse rounded-lg bg-white/30" />
               ))}
             </div>
           ) : activeSos.length === 0 ? (

@@ -10,7 +10,7 @@ export default function StatCard({ icon: Icon, label, value, sublabel, accent })
     slate: "bg-slate-100 text-slate-600 ring-slate-200",
   };
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-2xl border border-white/40 bg-white/55 p-5 shadow-lg shadow-slate-900/5 backdrop-blur-xl backdrop-saturate-150 transition-all hover:bg-white/70 hover:shadow-xl">
       <div className="flex items-center justify-between">
         <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl ring-1", accents[accent] || accents.slate)}>
           <Icon className="h-5 w-5" />

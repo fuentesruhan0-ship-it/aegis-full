@@ -257,7 +257,7 @@ export default function CommunityMap() {
 
       {/* Top bar overlay */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] p-3 sm:p-4">
-        <div className="pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+        <div className="pointer-events-auto mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border border-white/40 bg-white/55 p-3 shadow-lg backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
               <MapPin className="h-5 w-5" />
@@ -307,7 +307,7 @@ export default function CommunityMap() {
       {/* Not sharing banner */}
       {!myLocation && !loading && !sharing && (
         <div className="pointer-events-none absolute inset-x-0 top-20 z-[1000] flex justify-center px-4">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/95 px-4 py-3 shadow-md backdrop-blur">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-white/40 bg-white/40 px-4 py-3 shadow-md backdrop-blur">
             <Users className="h-5 w-5 shrink-0 text-blue-600" />
             <p className="text-sm text-blue-800">
               You're not on the map yet. Share your location to let your household and community see you.
@@ -319,7 +319,7 @@ export default function CommunityMap() {
       {/* User list panel */}
       {locations.length > 0 && (
         <div className="absolute bottom-0 left-0 z-[1000] w-full sm:w-80">
-          <div className="m-3 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-lg backdrop-blur">
+          <div className="m-3 overflow-hidden rounded-2xl border border-white/40 bg-white/55 shadow-lg backdrop-blur">
             <button
               onClick={() => setListOpen(!listOpen)}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
@@ -343,7 +343,7 @@ export default function CommunityMap() {
                               mapRef.current.flyTo([loc.location_lat, loc.location_lng], 15, { duration: 1 });
                             }
                           }}
-                          className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/30"
                         >
                           {loc.avatar_url ? (
                             <img src={loc.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-slate-200" />

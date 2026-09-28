@@ -155,7 +155,7 @@ export default function EmergencyContacts() {
             return (
               <li
                 key={c.id}
-                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="flex items-center gap-4 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white">
                   <Phone className="h-5 w-5" />

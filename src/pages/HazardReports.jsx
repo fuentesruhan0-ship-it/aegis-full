@@ -165,7 +165,7 @@ export default function HazardReports() {
             return (
               <li
                 key={r.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                className="rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-5 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">

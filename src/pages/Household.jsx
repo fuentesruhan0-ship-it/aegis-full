@@ -240,7 +240,7 @@ export default function Household() {
       />
 
       {/* Safety check-in */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-slate-900">
           <ShieldCheck className="h-5 w-5 text-emerald-600" />
           Safety Check-In
@@ -277,7 +277,7 @@ export default function Household() {
       </div>
 
       {/* Member status */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
             <Users className="h-5 w-5 text-slate-400" />
@@ -302,7 +302,7 @@ export default function Household() {
             return (
               <li
                 key={m.id}
-                className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3"
+                className="flex items-center gap-3 rounded-xl border border-white/30 bg-white/30 p-3"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-slate-500 to-slate-700 text-sm font-semibold text-white">
                   {(m.full_name || m.email || "U").charAt(0).toUpperCase()}
@@ -330,7 +330,7 @@ export default function Household() {
 
       {/* Evacuation plan */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
             <MapPin className="h-4 w-4 text-blue-600" />
             Meeting Point
@@ -339,7 +339,7 @@ export default function Household() {
             {household.meeting_point || "No meeting point set. Edit your plan to add one."}
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
             <HomeIcon className="h-4 w-4 text-blue-600" />
             Address
@@ -351,7 +351,7 @@ export default function Household() {
       </div>
 
       {household.evacuation_plan && (
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-4 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             Evacuation Plan
@@ -364,7 +364,7 @@ export default function Household() {
 
       {/* Recent check-ins */}
       {checkIns.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
             <Clock className="h-4 w-4 text-slate-400" />
             Recent Check-Ins
@@ -375,7 +375,7 @@ export default function Household() {
               const cfg = STATUS_CONFIG[ci.status];
               const StatusIcon = cfg.icon;
               return (
-                <li key={ci.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-slate-50">
+                <li key={ci.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/30">
                   <StatusIcon className={`h-4 w-4 ${cfg.text}`} />
                   <span className="text-sm font-medium text-slate-700">
                     {member?.full_name || member?.email || "Member"}

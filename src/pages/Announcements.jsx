@@ -124,7 +124,7 @@ export default function Announcements() {
             return (
               <li
                 key={ann.id}
-                className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md`}
+                className={`overflow-hidden rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 shadow-sm transition-shadow hover:shadow-md`}
               >
                 <div className={`h-1 w-full ${pc.bar}`} />
                 <div className="p-5">

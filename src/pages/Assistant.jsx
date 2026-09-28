@@ -29,7 +29,7 @@ function MessageBubble({ role, content }) {
         className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
             ? "rounded-tr-sm bg-blue-600 text-white"
-            : "rounded-tl-sm bg-white text-slate-700 shadow-sm ring-1 ring-slate-200"
+            : "rounded-tl-sm bg-white/55 text-slate-700 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40"
         }`}
       >
         <p className="whitespace-pre-wrap">{content}</p>
@@ -84,7 +84,7 @@ export default function Assistant() {
       />
 
       {/* Chat area */}
-      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 shadow-sm backdrop-blur-xl backdrop-saturate-150">
         <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -100,7 +100,7 @@ export default function Assistant() {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    className="rounded-full border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 px-3.5 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                   >
                     {s}
                   </button>
@@ -118,7 +118,7 @@ export default function Assistant() {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                 <Bot className="h-4 w-4" />
               </div>
-              <div className="rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200">
+              <div className="rounded-2xl rounded-tl-sm bg-white/55 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40">
                 <div className="flex gap-1">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:0ms]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:150ms]" />
@@ -131,7 +131,7 @@ export default function Assistant() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-slate-200 bg-white p-3 sm:p-4">
+        <div className="border-t border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-3 sm:p-4">
           <div className="flex items-end gap-2">
             <Textarea
               value={input}

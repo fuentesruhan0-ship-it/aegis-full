@@ -131,7 +131,7 @@ export default function SOS() {
         />
       ) : activeSos ? (
         /* Active SOS state */
-        <div className="overflow-hidden rounded-3xl border-2 border-rose-300 bg-gradient-to-b from-rose-50 to-white shadow-lg">
+        <div className="overflow-hidden rounded-3xl border-2 border-rose-300/60 bg-rose-50/55 backdrop-blur-xl backdrop-saturate-150 shadow-lg">
           <div className="bg-rose-600 px-6 py-5 text-center">
             <div className="mx-auto mb-3 flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-white/20 backdrop-blur">
               <Siren className="h-8 w-8 text-white" />
@@ -140,7 +140,7 @@ export default function SOS() {
             <p className="mt-1 text-sm text-rose-100">Your contacts have been notified</p>
           </div>
           <div className="p-6">
-            <div className="mb-4 flex items-start gap-3 rounded-xl bg-slate-50 p-4">
+            <div className="mb-4 flex items-start gap-3 rounded-xl bg-white/40 p-4 backdrop-blur-xl backdrop-saturate-150">
               <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">Your location</p>
@@ -164,7 +164,7 @@ export default function SOS() {
                   {contacts.map((c) => (
                     <li
                       key={c.id}
-                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3"
+                      className="flex items-center gap-3 rounded-lg border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-3"
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                         <Phone className="h-4 w-4" />
@@ -225,13 +225,13 @@ export default function SOS() {
           </button>
 
           {contacts.length === 0 && !loading && (
-            <div className="mt-8 flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="mt-8 flex items-center gap-2 rounded-lg bg-amber-50/60 px-4 py-3 backdrop-blur-xl text-sm text-amber-700">
               <AlertCircle className="h-4 w-4 shrink-0" />
               No emergency contacts yet — add some for SOS to reach people.
             </div>
           )}
 
-          <div className="mt-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mt-10 w-full max-w-md rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-5 shadow-sm">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Users className="h-4 w-4 text-slate-400" />
               Will notify ({contacts.length})

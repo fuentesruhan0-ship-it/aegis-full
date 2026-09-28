@@ -143,9 +143,9 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 bg-slate-900 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 bg-slate-900/60 backdrop-blur-2xl backdrop-saturate-150 lg:block">
         <SidebarContent />
       </aside>
 
@@ -156,7 +156,7 @@ export default function AppLayout() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-slate-900 shadow-2xl">
+          <aside className="absolute inset-y-0 left-0 w-72 bg-slate-900/60 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute right-3 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
@@ -171,7 +171,7 @@ export default function AppLayout() {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur-md lg:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/30 bg-white/50 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
