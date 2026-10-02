@@ -9,10 +9,33 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import {
-  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2
+  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2, Layers, LocateFixed
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
+} from "@/components/ui/dropdown-menu";
 
 const TUPI_CENTER = [6.2356, 125.0286];
+
+const MAP_STYLES = {
+  satellite: {
+    label: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Source: Esri, Earthstar Geographics",
+  },
+  topo: {
+    label: "Topo",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin",
+  },
+  outdoor: {
+    label: "Outdoor",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: "map data: © OpenStreetMap contributors, SRTM | style: © OpenTopoMap (CC-BY-SA)",
+    subdomains: "abc",
+    maxZoom: 17,
+  },
+};
 const EMOJI_CHOICES = ["🧍", "👨", "👩", "🧑", "👦", "👧", "👴", "👵", "👮", "🧑‍🚒", "👷", "🧑‍⚕️", "🚑", "🛡️", "📍", "🎯"];
 
 function getLocation() {
@@ -92,6 +115,8 @@ export default function CommunityMap() {
   const [listOpen, setListOpen] = useState(true);
   const [flyTrigger, setFlyTrigger] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [mapStyle, setMapStyle] = useState("satellite");
+  const [follow, setFollow] = useState(true);
   const fileInputRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -122,6 +147,11 @@ export default function CommunityMap() {
   useEffect(() => {
     if (myLocation?.id) setFlyTrigger((t) => t + 1);
   }, [myLocation?.id]);
+
+  // Follow mode: recenter whenever the user's coordinates change
+  useEffect(() => {
+    if (follow && myLocation?.id) setFlyTrigger((t) => t + 1);
+  }, [follow, myLocation?.location_lat, myLocation?.location_lng]);
 
   // Put every user on the map automatically the first time they open it
   useEffect(() => {
@@ -239,8 +269,11 @@ export default function CommunityMap() {
         className="z-0"
       >
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution='Tiles &copy; Esri &mdash; Source: Esri, Earthstar Geographics'
+          key={mapStyle}
+          url={MAP_STYLES[mapStyle].url}
+          attribution={MAP_STYLES[mapStyle].attribution}
+          subdomains={MAP_STYLES[mapStyle].subdomains || "abc"}
+          maxZoom={MAP_STYLES[mapStyle].maxZoom || 19}
         />
         {locations.map((loc) => {
           const isMe = loc.created_by_id === user?.id;
@@ -327,9 +360,28 @@ export default function CommunityMap() {
                 <Smile className="ml-1 h-4 w-4 text-slate-400" />
               </Button>
             )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Layers className="mr-1 h-4 w-4" /> {MAP_STYLES[mapStyle].label}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {Object.entries(MAP_STYLES).map(([key, s]) => (
+                  <DropdownMenuItem key={key} onClick={() => setMapStyle(key)} className={mapStyle === key ? "font-semibold" : ""}>
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {myLocation && (
-              <Button variant="outline" size="sm" onClick={flyToMe} className="hidden sm:flex">
-                <Crosshair className="mr-1 h-4 w-4" /> My location
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setFollow(true); flyToMe(); }}
+                className={`hidden sm:flex ${follow ? "text-blue-600 ring-1 ring-blue-300" : ""}`}
+              >
+                <LocateFixed className="mr-1 h-4 w-4" /> Follow
               </Button>
             )}
             <Button
@@ -419,13 +471,27 @@ export default function CommunityMap() {
       {/* My location controls (mobile) */}
       {myLocation && (
         <div className="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 sm:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-10 w-10 rounded-full glass-cinematic">
+                <Layers className="h-5 w-5 text-blue-600" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {Object.entries(MAP_STYLES).map(([key, s]) => (
+                <DropdownMenuItem key={key} onClick={() => setMapStyle(key)} className={mapStyle === key ? "font-semibold" : ""}>
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="icon"
-            onClick={flyToMe}
-            className="h-10 w-10 rounded-full glass-cinematic"
+            onClick={() => { setFollow(true); flyToMe(); }}
+            className={`h-10 w-10 rounded-full glass-cinematic ${follow ? "text-blue-600 ring-1 ring-blue-300" : ""}`}
           >
-            <Crosshair className="h-5 w-5 text-blue-600" />
+            <LocateFixed className="h-5 w-5 text-blue-600" />
           </Button>
           <Button
             variant="outline"
