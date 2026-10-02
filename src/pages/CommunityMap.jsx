@@ -9,11 +9,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import {
-  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2, Layers, LocateFixed
+  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2, Layers, LocateFixed, Activity
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
+import EarthquakeLayer from "@/components/EarthquakeLayer";
 
 const TUPI_CENTER = [6.2356, 125.0286];
 
@@ -117,6 +118,7 @@ export default function CommunityMap() {
   const [uploading, setUploading] = useState(false);
   const [mapStyle, setMapStyle] = useState("satellite");
   const [follow, setFollow] = useState(true);
+  const [showQuakes, setShowQuakes] = useState(true);
   const [, setNowTick] = useState(0);
 
   // Keep "time ago" labels live so they never go stale
@@ -338,6 +340,7 @@ export default function CommunityMap() {
             </Marker>
           );
         })}
+        <EarthquakeLayer visible={showQuakes} />
         <FlyToMe trigger={flyTrigger} location={myLocation} />
       </MapContainer>
 
@@ -367,6 +370,15 @@ export default function CommunityMap() {
                 <Smile className="ml-1 h-4 w-4 text-slate-400" />
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowQuakes((v) => !v)}
+              className={`hidden sm:flex ${showQuakes ? "text-rose-600 ring-1 ring-rose-300" : ""}`}
+              title="Toggle earthquake detection"
+            >
+              <Activity className="mr-1 h-4 w-4" /> Quakes
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -478,6 +490,15 @@ export default function CommunityMap() {
       {/* My location controls (mobile) */}
       {myLocation && (
         <div className="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 sm:hidden">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowQuakes((v) => !v)}
+            className={`h-10 w-10 rounded-full glass-cinematic ${showQuakes ? "text-rose-600 ring-1 ring-rose-300" : ""}`}
+            title="Toggle earthquake detection"
+          >
+            <Activity className="h-5 w-5" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-10 w-10 rounded-full glass-cinematic">
