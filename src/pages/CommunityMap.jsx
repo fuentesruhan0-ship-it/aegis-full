@@ -86,7 +86,8 @@ export default function CommunityMap() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [emoji, setEmoji] = useState("🧍");
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
+  const autoShared = useRef(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [listOpen, setListOpen] = useState(true);
   const [flyTrigger, setFlyTrigger] = useState(0);
@@ -117,12 +118,25 @@ export default function CommunityMap() {
     return unsub;
   }, [loadLocations]);
 
-  const shareLocation = async () => {
+  // Center the map on the user as soon as their marker is known
+  useEffect(() => {
+    if (myLocation?.id) setFlyTrigger((t) => t + 1);
+  }, [myLocation?.id]);
+
+  // Put every user on the map automatically the first time they open it
+  useEffect(() => {
+    if (!loading && !myLocation && user && !autoShared.current) {
+      autoShared.current = true;
+      shareLocation(true);
+    }
+  }, [loading, myLocation, user]);
+
+  const shareLocation = async (silent = false) => {
     setSharing(true);
     try {
       const pos = await getLocation();
       if (!pos) {
-        alert("Unable to get your location. Please allow location access in your browser settings and try again.");
+        if (silent !== true) alert("Unable to get your location. Please allow location access in your browser settings and try again.");
         return;
       }
       const label = await reverseGeocode(pos.lat, pos.lng);
@@ -170,6 +184,7 @@ export default function CommunityMap() {
     try {
       const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
       setAvatarUrl(file_url);
+      await base44.auth.updateMe({ avatar_url: file_url });
       if (myLocation) {
         const updated = await base44.entities.UserLocation.update(myLocation.id, { avatar_url: file_url });
         setMyLocation(updated);
@@ -184,6 +199,7 @@ export default function CommunityMap() {
 
   const removePhoto = async () => {
     setAvatarUrl(null);
+    await base44.auth.updateMe({ avatar_url: null });
     if (myLocation) {
       try {
         const updated = await base44.entities.UserLocation.update(myLocation.id, { avatar_url: null });
@@ -317,7 +333,7 @@ export default function CommunityMap() {
               </Button>
             )}
             <Button
-              onClick={shareLocation}
+              onClick={() => shareLocation()}
               disabled={sharing}
               size="sm"
               className={myLocation ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"}
@@ -361,7 +377,7 @@ export default function CommunityMap() {
               {listOpen ? <EyeOff className="h-4 w-4 text-slate-400" /> : <Eye className="h-4 w-4 text-slate-400" />}
             </button>
             {listOpen && (
-              <div className="max-h-64 overflow-y-auto border-t border-slate-100 px-2 py-2">
+              <div className="max-h-64 overflow-y-auto border-t border-white/50 px-2 py-2">
                 <ul className="space-y-1">
                   {locations.map((loc) => {
                     const isMe = loc.created_by_id === user?.id;
@@ -407,7 +423,7 @@ export default function CommunityMap() {
             variant="outline"
             size="icon"
             onClick={flyToMe}
-            className="h-10 w-10 rounded-full border-slate-200 bg-white shadow-md"
+            className="h-10 w-10 rounded-full glass-cinematic"
           >
             <Crosshair className="h-5 w-5 text-blue-600" />
           </Button>
@@ -415,7 +431,7 @@ export default function CommunityMap() {
             variant="outline"
             size="icon"
             onClick={() => setAvatarOpen(true)}
-            className="h-10 w-10 rounded-full border-slate-200 bg-white shadow-md"
+            className="h-10 w-10 rounded-full glass-cinematic"
           >
             {avatarUrl ? <Camera className="h-5 w-5 text-blue-600" /> : <span className="text-lg">{emoji}</span>}
           </Button>

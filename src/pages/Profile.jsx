@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import PageHeader from "@/components/PageHeader";
+import ProfilePhotoCard from "@/components/ProfilePhotoCard";
 import {
   UserCircle, Save, Loader2, Home as HomeIcon, Users, Plus, Phone, MapPin
 } from "lucide-react";
@@ -105,8 +106,10 @@ export default function Profile() {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader title="Profile & Settings" description="Manage your role and household" icon={UserCircle} />
 
+      {user && <ProfilePhotoCard user={user} />}
+
       {/* Role & contact */}
-      <div className="mb-6 rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
+      <div className="mb-6 rounded-2xl glass-cinematic p-6">
         <h2 className="mb-4 text-base font-semibold text-slate-900">Your role & contact info</h2>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -146,7 +149,7 @@ export default function Profile() {
       </div>
 
       {/* Household */}
-      <div className="rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
+      <div className="rounded-2xl glass-cinematic p-6">
         <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
           <HomeIcon className="h-5 w-5 text-emerald-600" />
           Household
@@ -171,7 +174,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 rounded-lg bg-slate-50 p-3">
+            <div className="mt-3 rounded-lg border border-white/50 bg-white/40 p-3">
               <p className="text-xs text-slate-400">Household ID (share to let family join)</p>
               <p className="mt-1 font-mono text-sm text-slate-700 select-all">{household.id}</p>
             </div>
