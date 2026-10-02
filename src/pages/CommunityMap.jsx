@@ -117,6 +117,13 @@ export default function CommunityMap() {
   const [uploading, setUploading] = useState(false);
   const [mapStyle, setMapStyle] = useState("satellite");
   const [follow, setFollow] = useState(true);
+  const [, setNowTick] = useState(0);
+
+  // Keep "time ago" labels live so they never go stale
+  useEffect(() => {
+    const t = setInterval(() => setNowTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
   const fileInputRef = useRef(null);
   const mapRef = useRef(null);
 
