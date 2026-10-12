@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
 import PageHeader from "@/components/PageHeader";
 import ProfilePhotoCard from "@/components/ProfilePhotoCard";
 import {
-  UserCircle, Save, Loader2, Home as HomeIcon, Users, Plus, Phone, MapPin
+  UserCircle, Save, Loader2, Home as HomeIcon, Users, Plus, Phone, MapPin, Navigation
 } from "lucide-react";
 
 const ROLES = [
@@ -22,6 +22,26 @@ const ROLES = [
   { value: "volunteer", label: "Volunteer", desc: "Matching with LGUs & affected communities" },
   { value: "responder", label: "Emergency Responder", desc: "SOS alerts & household safety check-in access" },
 ];
+// Geolocation helpers
+function getLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
+function reverseGeocode(lat, lng) {
+  return fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`
+  )
+    .then((r) => r.json())
+    .then((d) => d?.display_name || "Current location")
+    .catch(() => "Current location");
+}
 
 export default function Profile() {
   const { user } = useAuth();
@@ -32,6 +52,8 @@ export default function Profile() {
   const [hhOpen, setHhOpen] = useState(false);
   const [hhForm, setHhForm] = useState({ name: "", address: "", meeting_point: "", evacuation_plan: "" });
   const [joinId, setJoinId] = useState("");
+  const [fetchingLocation, setFetchingLocation] = useState(false);
+  const [fetchingHHLocation, setFetchingHHLocation] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -40,6 +62,11 @@ export default function Profile() {
         phone: user.phone || "",
         address: user.address || "",
       });
+
+      // Auto-fetch location if address is empty
+      if (!user.address || user.address.trim() === "") {
+        autoFetchLocation();
+      }
       if (user.household_id) {
         base44.entities.Household.get(user.household_id)
           .then(setHousehold)
@@ -50,6 +77,38 @@ export default function Profile() {
       }
     }
   }, [user]);
+
+  // Auto-fetch location for user profile
+  const autoFetchLocation = async () => {
+    setFetchingLocation(true);
+    try {
+      const loc = await getLocation();
+      if (loc) {
+        const address = await reverseGeocode(loc.lat, loc.lng);
+        setForm((prev) => ({ ...prev, address }));
+      }
+    } catch (e) {
+      console.error("Failed to fetch location:", e);
+    } finally {
+      setFetchingLocation(false);
+    }
+  };
+
+  // Auto-fetch location for household creation
+  const autoFetchHHLocation = async () => {
+    setFetchingHHLocation(true);
+    try {
+      const loc = await getLocation();
+      if (loc) {
+        const address = await reverseGeocode(loc.lat, loc.lng);
+        setHhForm((prev) => ({ ...prev, address }));
+      }
+    } catch (e) {
+      console.error("Failed to fetch household location:", e);
+    } finally {
+      setFetchingHHLocation(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -140,6 +199,9 @@ export default function Profile() {
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input id="p-address" className="pl-10" placeholder="Your home address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
               </div>
+                          <p className="text-xs text-slate-500">
+                {fetchingLocation ? "Detecting your location..." : "Tap pin to auto-fill from your current location"}
+              </p>
             </div>
           </div>
           <Button onClick={save} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
@@ -169,7 +231,7 @@ export default function Profile() {
                   <p className="font-semibold text-slate-900">{household.name}</p>
                   <p className="text-sm text-slate-500">
                     {household.member_user_ids?.length || 1} member(s)
-                    {household.address ? ` · ${household.address}` : ""}
+                    {household.address ? ` Â· ${household.address}` : ""}
                   </p>
                 </div>
               </div>
