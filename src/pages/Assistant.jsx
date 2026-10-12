@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/PageHeader";
-import { Bot, Send, Loader2, ShieldCheck, AlertTriangle, User } from "lucide-react";
+import { Bot, Send, Loader2, ShieldCheck, User, Wifi, WifiOff } from "lucide-react";
+import { findBestMatch } from "@/lib/offlineKnowledge";
 
 const SUGGESTIONS = [
   "What should I do during an earthquake?",
@@ -14,8 +15,10 @@ const SUGGESTIONS = [
   "What should I do immediately after the shaking stops?",
 ];
 
-function MessageBubble({ role, content }) {
+function MessageBubble({ role, content, source }) {
   const isUser = role === "user";
+  const isCached = source === "cached" || source === "fallback";
+  
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
@@ -25,14 +28,31 @@ function MessageBubble({ role, content }) {
       >
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-          isUser
-            ? "rounded-tr-sm bg-blue-600 text-white"
-            : "rounded-tl-sm bg-white/55 text-slate-700 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40"
-        }`}
-      >
-        <p className="whitespace-pre-wrap">{content}</p>
+      <div className="flex-1 max-w-[80%]">
+        <div
+          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            isUser
+              ? "rounded-tr-sm bg-blue-600 text-white"
+              : "rounded-tl-sm bg-white/55 text-slate-700 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40"
+          }`}
+        >
+          <p className="whitespace-pre-wrap">{content}</p>
+        </div>
+        {!isUser && source && (
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 px-1">
+            {isCached ? (
+              <>
+                <WifiOff className="h-3 w-3" />
+                <span>Offline - Cached response</span>
+              </>
+            ) : (
+              <>
+                <Wifi className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600">Live AI response</span>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -43,7 +63,29 @@ export default function Assistant() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const scrollRef = useRef(null);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      console.log("✅ Back online - using live AI");
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      console.log("📴 Offline - using cached responses");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,22 +94,62 @@ export default function Assistant() {
   const send = async (text) => {
     const message = (text ?? input).trim();
     if (!message || sending) return;
+    
     const userMsg = { role: "user", content: message };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
     setSending(true);
+    
     try {
-      const res = await base44.functions.invoke("aegisAssistant", {
-        message,
-        history: messages.map((m) => ({ role: m.role, content: m.content })),
-      });
-      const reply = res?.data?.reply || res?.data?.error || "I'm having trouble responding right now. Please try again.";
-      setMessages([...newMessages, { role: "assistant", content: reply }]);
+      if (isOnline) {
+        // Try online AI first
+        try {
+          const res = await Promise.race([
+            base44.functions.invoke("aegisAssistant", {
+              message,
+              history: messages.map((m) => ({ role: m.role, content: m.content })),
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("timeout")), 5000)
+            )
+          ]);
+          
+          const reply = res?.data?.reply || res?.data?.error;
+          if (reply) {
+            setMessages([...newMessages, { 
+              role: "assistant", 
+              content: reply,
+              source: "online"
+            }]);
+            return;
+          }
+        } catch (onlineError) {
+          console.log("Online AI failed, using cached response:", onlineError.message);
+          // Fall through to offline mode
+        }
+      }
+      
+      // Use offline cached response
+      const { answer, source, confidence } = findBestMatch(message);
+      setMessages([...newMessages, { 
+        role: "assistant", 
+        content: answer,
+        source: source
+      }]);
+      
     } catch (e) {
+      console.error("Assistant error:", e);
+      
+      // Ultimate fallback
+      const { answer } = findBestMatch(message);
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "The assistant is temporarily unavailable. For emergencies, use the SOS button or call 911." },
+        { 
+          role: "assistant", 
+          content: answer,
+          source: "fallback"
+        },
       ]);
     } finally {
       setSending(false);
@@ -83,6 +165,27 @@ export default function Assistant() {
         accent="blue"
       />
 
+      {/* Online/Offline Status Badge */}
+      <div className="mb-4 flex items-center justify-center">
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
+          isOnline 
+            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" 
+            : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+        }`}>
+          {isOnline ? (
+            <>
+              <Wifi className="h-4 w-4" />
+              <span>Online Mode - Live AI</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-4 w-4" />
+              <span>Offline Mode - Cached Knowledge</span>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Chat area */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 shadow-sm backdrop-blur-xl backdrop-saturate-150">
         <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
@@ -93,7 +196,7 @@ export default function Assistant() {
               </div>
               <h3 className="text-lg font-semibold text-slate-900">How can I help you stay safe?</h3>
               <p className="mt-1.5 max-w-sm text-sm text-slate-500">
-                Ask me anything about earthquake preparedness, response, or recovery. I only share verified guidance.
+                Ask me anything about earthquake preparedness, response, or recovery. I work both online and offline!
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((s) => (
@@ -110,7 +213,7 @@ export default function Assistant() {
           )}
 
           {messages.map((m, i) => (
-            <MessageBubble key={i} role={m.role} content={m.content} />
+            <MessageBubble key={i} role={m.role} content={m.content} source={m.source} />
           ))}
 
           {sending && (
@@ -142,7 +245,7 @@ export default function Assistant() {
                   send();
                 }
               }}
-              placeholder="Ask about earthquake safety..."
+              placeholder={isOnline ? "Ask about earthquake safety..." : "Ask about earthquake safety (offline mode)..."}
               rows={1}
               className="max-h-32 resize-none"
               disabled={sending}
@@ -158,7 +261,10 @@ export default function Assistant() {
           </div>
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
             <ShieldCheck className="h-3 w-3" />
-            AI guidance is informational. For emergencies, use SOS or call 911.
+            {isOnline 
+              ? "AI guidance is informational. For emergencies, use SOS or call 911."
+              : "Working offline with cached earthquake safety knowledge. For emergencies, use SOS or call 911."
+            }
           </p>
         </div>
       </div>

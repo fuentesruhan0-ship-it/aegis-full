@@ -30,8 +30,16 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
-      setShowOtp(true);
+      const result = await base44.auth.register({ email, password });
+      
+      // For mock auth (development), skip OTP and log in directly
+      if (result?.access_token) {
+        localStorage.setItem('mock_auth_token', result.access_token);
+        window.location.href = safeReturnTo();
+      } else {
+        // For real Base44 backend, show OTP screen
+        setShowOtp(true);
+      }
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -146,22 +154,11 @@ export default function Register() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
-        </div>
+      {/* Google OAuth disabled until configured */}
+      <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <p className="text-sm text-blue-900 dark:text-blue-100 text-center">
+          🔐 Create your account with email and password
+        </p>
       </div>
 
       {error && (

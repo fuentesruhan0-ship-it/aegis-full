@@ -35,3 +35,8 @@ dist-ssr
 .env
 .vite
 base44/.app.jsonc
+
+.vercel
+
+*.backup
+.freebuff/

@@ -1,13 +1,25 @@
 import React, { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, Loader2, Trash2, Smile } from "lucide-react";
 
 // Saves the photo on the user's profile AND on their map marker so everyone sees it.
 async function syncAvatar(userId, url) {
+  // Update user profile
   await base44.auth.updateMe({ avatar_url: url });
-  const mine = await base44.entities.UserLocation.filter({ created_by_id: userId });
-  if (mine[0]) await base44.entities.UserLocation.update(mine[0].id, { avatar_url: url });
+  
+  // Update map marker if exists
+  try {
+    const mine = await base44.entities.UserLocation.filter({ created_by_id: userId });
+    if (mine && mine.length > 0) {
+      await base44.entities.UserLocation.update(mine[0].id, { 
+        avatar_url: url,
+        emoji: url ? null : '🧍' // Clear emoji when photo is set
+      });
+    }
+  } catch (e) {
+    console.log('No location marker to update yet');
+  }
 }
 
 export default function ProfilePhotoCard({ user }) {
@@ -19,17 +31,31 @@ export default function ProfilePhotoCard({ user }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-    await syncAvatar(user.id, file_url);
-    setUrl(file_url);
-    setBusy(false);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      await syncAvatar(user.id, file_url);
+      setUrl(file_url);
+      // Reload to show updated photo everywhere
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err) {
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const remove = async () => {
     setBusy(true);
-    await syncAvatar(user.id, null);
-    setUrl(null);
-    setBusy(false);
+    try {
+      await syncAvatar(user.id, null);
+      setUrl(null);
+      // Reload to show updated avatar everywhere
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err) {
+      alert("Failed to remove photo: " + err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const initial = (user?.full_name || user?.email || "U")[0].toUpperCase();
@@ -37,7 +63,10 @@ export default function ProfilePhotoCard({ user }) {
   return (
     <div className="mb-6 rounded-2xl glass-cinematic p-6">
       <h2 className="mb-1 text-base font-semibold text-slate-900">Profile photo</h2>
-      <p className="mb-4 text-xs text-slate-500">This photo is your icon on the Community Map — everyone can see it.</p>
+      <p className="mb-4 text-xs text-slate-500">
+        This photo is your icon on the Community Map — everyone can see it. 
+        {url && <span className="block mt-1 text-blue-600">💡 You can also change to an emoji on the Community Map page.</span>}
+      </p>
       <div className="flex items-center gap-4">
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full ring-4 ring-white/80 shadow-lg">
           {url ? (

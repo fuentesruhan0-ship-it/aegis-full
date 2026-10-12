@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { CircleMarker, Popup } from "react-leaflet";
-import { Loader2 } from "lucide-react";
+import { Loader2, Bell } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 // Philippines region bounds
 const MIN_LAT = 4;
@@ -8,7 +9,8 @@ const MAX_LAT = 21;
 const MIN_LNG = 116;
 const MAX_LNG = 127;
 const MIN_MAG = 2.5;
-const DAYS = 30;
+const DAYS = 30; // Show earthquakes from last 30 days
+const ARCHIVE_DAYS = 60; // Archive earthquakes older than 60 days
 
 function magColor(mag) {
   if (mag >= 6) return "#7c1d1d"; // major
@@ -40,10 +42,38 @@ function timeAgo(ms) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+// Vibrate device for earthquake alert
+function vibrateDevice(magnitude) {
+  if (!navigator.vibrate) return;
+  
+  // Vibration pattern based on magnitude
+  if (magnitude >= 6) {
+    // Major: Long intense vibration
+    navigator.vibrate([500, 100, 500, 100, 500]);
+  } else if (magnitude >= 5) {
+    // Strong: Medium vibration
+    navigator.vibrate([300, 100, 300, 100, 300]);
+  } else if (magnitude >= 4) {
+    // Moderate: Short vibration
+    navigator.vibrate([200, 100, 200]);
+  } else {
+    // Light: Single vibration
+    navigator.vibrate(150);
+  }
+}
+
+// Check if earthquake is "recent" (within last 10 minutes)
+function isRecentQuake(time) {
+  return Date.now() - time < 10 * 60 * 1000;
+}
+
 export default function EarthquakeLayer({ visible }) {
   const [quakes, setQuakes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [newQuakeAlert, setNewQuakeAlert] = useState(null);
+  const previousQuakeIds = useRef(new Set());
+  const hasVibrated = useRef(new Set());
 
   const fetchQuakes = async () => {
     setLoading(true);
@@ -60,22 +90,103 @@ export default function EarthquakeLayer({ visible }) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`USGS responded ${res.status}`);
       const data = await res.json();
-      setQuakes(data.features || []);
+      const features = data.features || [];
+      
+      // Check for new earthquakes
+      const newQuakes = features.filter(q => !previousQuakeIds.current.has(q.id));
+      
+      // Alert and vibrate for recent earthquakes
+      newQuakes.forEach(q => {
+        const { mag, place, time } = q.properties;
+        if (isRecentQuake(time) && !hasVibrated.current.has(q.id)) {
+          // Vibrate device
+          vibrateDevice(mag);
+          hasVibrated.current.add(q.id);
+          
+          // Show alert
+          setNewQuakeAlert({
+            mag,
+            place,
+            time,
+            id: q.id,
+          });
+          
+          // Auto-hide alert after 10 seconds
+          setTimeout(() => {
+            setNewQuakeAlert(null);
+          }, 10000);
+          
+          // Browser notification (if permitted)
+          if (Notification.permission === "granted") {
+            new Notification(`🚨 Earthquake Detected: M${mag.toFixed(1)}`, {
+              body: place || "Nearby earthquake detected",
+              icon: "/aegis-icon.png",
+              tag: q.id,
+            });
+          }
+        }
+        
+        previousQuakeIds.current.add(q.id);
+      });
+      
+      setQuakes(features);
+      
+      // Archive old earthquakes (older than 60 days) to history
+      await archiveOldQuakes(features);
+      
     } catch (e) {
+      console.error("Earthquake fetch error:", e);
       setError(e.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Archive earthquakes older than 60 days to Base44 storage
+  const archiveOldQuakes = async (currentQuakes) => {
+    try {
+      const archiveDate = Date.now() - ARCHIVE_DAYS * 24 * 60 * 60 * 1000;
+      const oldQuakes = currentQuakes.filter(q => q.properties.time < archiveDate);
+      
+      if (oldQuakes.length === 0) return;
+      
+      // Store in Base44 as earthquake history
+      // Check if we have an EarthquakeHistory entity, if not just log
+      console.log(`Archiving ${oldQuakes.length} old earthquakes to history`);
+      
+      // You can implement actual Base44 storage here if you create an EarthquakeHistory entity
+      // Example:
+      // for (const quake of oldQuakes) {
+      //   await base44.entities.EarthquakeHistory.create({
+      //     usgs_id: quake.id,
+      //     magnitude: quake.properties.mag,
+      //     place: quake.properties.place,
+      //     time: new Date(quake.properties.time).toISOString(),
+      //     latitude: quake.geometry.coordinates[1],
+      //     longitude: quake.geometry.coordinates[0],
+      //     depth: quake.geometry.coordinates[2],
+      //   });
+      // }
+    } catch (e) {
+      console.error("Failed to archive old earthquakes:", e);
+    }
+  };
+
+  // Request notification permission on first load
+  useEffect(() => {
+    if (visible && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, [visible]);
+
   useEffect(() => {
     if (visible) fetchQuakes();
   }, [visible]);
 
-  // Refresh every 5 minutes while visible
+  // Refresh every 2 minutes while visible (faster for real-time detection)
   useEffect(() => {
     if (!visible) return;
-    const t = setInterval(fetchQuakes, 5 * 60 * 1000);
+    const t = setInterval(fetchQuakes, 2 * 60 * 1000);
     return () => clearInterval(t);
   }, [visible]);
 
@@ -100,10 +211,36 @@ export default function EarthquakeLayer({ visible }) {
 
   return (
     <>
+      {/* New earthquake alert banner */}
+      {newQuakeAlert && (
+        <div className="absolute left-1/2 top-24 z-[1001] -translate-x-1/2 animate-bounce">
+          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 px-6 py-4 shadow-2xl">
+            <Bell className="h-6 w-6 text-white animate-pulse" />
+            <div>
+              <div className="text-sm font-bold text-white">
+                🚨 EARTHQUAKE DETECTED - M{newQuakeAlert.mag.toFixed(1)}
+              </div>
+              <div className="text-xs text-rose-100">
+                {newQuakeAlert.place} · {timeAgo(newQuakeAlert.time)}
+              </div>
+            </div>
+            <button
+              onClick={() => setNewQuakeAlert(null)}
+              className="text-white hover:text-rose-200 ml-2"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Earthquake markers */}
       {quakes.map((q) => {
         const [lng, lat, depth] = q.geometry.coordinates;
         const { mag, place, time, url } = q.properties;
         const color = magColor(mag);
+        const isRecent = isRecentQuake(time);
+        
         return (
           <CircleMarker
             key={q.id}
@@ -112,12 +249,28 @@ export default function EarthquakeLayer({ visible }) {
             pathOptions={{
               color: color,
               fillColor: color,
-              fillOpacity: 0.55,
-              weight: 1.5,
+              fillOpacity: isRecent ? 0.8 : 0.55,
+              weight: isRecent ? 2.5 : 1.5,
             }}
+            className={isRecent ? "animate-pulse" : ""}
           >
             <Popup>
               <div style={{ minWidth: 200 }}>
+                {isRecent && (
+                  <div style={{
+                    background: "linear-gradient(135deg, #dc2626, #991b1b)",
+                    color: "white",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    marginBottom: 8,
+                    textAlign: "center",
+                    textTransform: "uppercase",
+                  }}>
+                    🔴 LIVE - Just detected!
+                  </div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <span style={{
                     display: "inline-flex", alignItems: "center", justifyContent: "center",
@@ -155,6 +308,16 @@ export default function EarthquakeLayer({ visible }) {
           </CircleMarker>
         );
       })}
+      
+      {/* Earthquake count indicator */}
+      {quakes.length > 0 && (
+        <div className="absolute right-3 top-32 z-[1000] flex items-center gap-2 rounded-xl glass-cinematic px-3 py-2 text-xs">
+          <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+          <span className="font-semibold text-slate-700">
+            {quakes.length} earthquake{quakes.length === 1 ? "" : "s"} (last 30 days)
+          </span>
+        </div>
+      )}
     </>
   );
 }

@@ -102,17 +102,54 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
+    console.log('🚪 Starting logout process...');
+    
+    // Clear all local state FIRST
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError(null);
+    setAuthChecked(false);
     
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+    // Clear ALL authentication-related data from localStorage
+    try {
+      // Base44 tokens
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+      // Mock auth tokens
+      localStorage.removeItem('mock_auth_token');
+      localStorage.removeItem('mock_user');
+      // App cached data
+      localStorage.removeItem('my_last_position');
+      localStorage.removeItem('aegis_fault_lines_cache');
+      // Clear any other app-specific data
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('aegis_') || key.startsWith('base44_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      console.log('✅ Cleared localStorage');
+    } catch (e) {
+      console.warn('⚠️ Failed to clear localStorage:', e);
     }
+    
+    // Call Base44 SDK logout (this will clear server-side session)
+    try {
+      await base44.auth.logout();
+      console.log('✅ Base44 server logout successful');
+    } catch (e) {
+      console.warn('⚠️ Base44 server logout failed:', e);
+      // Continue anyway - local tokens are cleared
+    }
+    
+    console.log('🔄 Redirecting to login page...');
+    
+    // Force full page reload to completely reset the app
+    window.location.href = '/login';
   };
 
   const navigateToLogin = () => {

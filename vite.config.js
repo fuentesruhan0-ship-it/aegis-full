@@ -15,5 +15,15 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
-  ]
+  ],
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.VITE_BASE44_APP_BASE_URL || 'https://api.base44.com',
+        changeOrigin: true,
+        secure: false, // Disable SSL verification for proxy
+        rewrite: (path) => path
+      }
+    }
+  }
 });

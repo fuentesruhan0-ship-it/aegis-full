@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -125,14 +125,14 @@ export default function SOS() {
           description="SOS sends alerts to your household's emergency contacts. Create a household to get started."
           action={
             <a href="/profile">
-              <Button className="bg-blue-600 hover:bg-blue-700">Set up household</Button>
+              <Button className="bg-blue-600/90 backdrop-blur-xl backdrop-saturate-150 hover:bg-blue-700/90">Set up household</Button>
             </a>
           }
         />
       ) : activeSos ? (
         /* Active SOS state */
         <div className="overflow-hidden rounded-3xl border-2 border-rose-300/60 bg-rose-50/55 backdrop-blur-xl backdrop-saturate-150 shadow-lg">
-          <div className="bg-rose-600 px-6 py-5 text-center">
+          <div className="bg-gradient-to-br from-rose-600 to-rose-700 px-6 py-5 text-center">
             <div className="mx-auto mb-3 flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-white/20 backdrop-blur">
               <Siren className="h-8 w-8 text-white" />
             </div>
@@ -140,7 +140,7 @@ export default function SOS() {
             <p className="mt-1 text-sm text-rose-100">Your contacts have been notified</p>
           </div>
           <div className="p-6">
-            <div className="mb-4 flex items-start gap-3 rounded-xl bg-white/40 p-4 backdrop-blur-xl backdrop-saturate-150">
+            <div className="mb-4 flex items-start gap-3 rounded-xl bg-white/60 backdrop-blur-xl backdrop-saturate-150 border border-white/40 p-4 shadow-[4px_4px_12px_rgba(0,0,0,0.08),-2px_-2px_8px_rgba(255,255,255,0.9)]">
               <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">Your location</p>
@@ -164,7 +164,7 @@ export default function SOS() {
                   {contacts.map((c) => (
                     <li
                       key={c.id}
-                      className="flex items-center gap-3 rounded-lg border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-3"
+                      className="flex items-center gap-3 rounded-xl border border-white/40 bg-white/60 backdrop-blur-xl backdrop-saturate-150 p-3 shadow-[4px_4px_8px_rgba(0,0,0,0.06),-2px_-2px_6px_rgba(255,255,255,0.95)]"
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                         <Phone className="h-4 w-4" />
@@ -182,9 +182,10 @@ export default function SOS() {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
+                variant="success"
                 onClick={resolveSOS}
                 disabled={resolving}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                className="flex-1"
               >
                 {resolving ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>
@@ -193,7 +194,7 @@ export default function SOS() {
                 )}
               </Button>
               <a href={`tel:911`} className="flex-1">
-                <Button variant="outline" className="w-full border-rose-300 text-rose-700 hover:bg-rose-50">
+                <Button variant="outline" className="w-full text-rose-700 hover:text-rose-800">
                   <Phone className="mr-2 h-4 w-4" />Call 911 directly
                 </Button>
               </a>
@@ -208,16 +209,22 @@ export default function SOS() {
             {contacts.length !== 1 ? "s" : ""} in your household with your current location.
           </p>
 
+          {/* Enhanced vibrant pulsing SOS button */}
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={loading}
-            className="group relative flex h-56 w-56 items-center justify-center rounded-full bg-rose-600 shadow-2xl shadow-rose-600/40 transition-all hover:scale-105 hover:bg-rose-700 active:scale-95 disabled:opacity-50"
+            className="group relative flex h-56 w-56 items-center justify-center rounded-full bg-gradient-to-br from-rose-600 to-rose-700 shadow-2xl shadow-rose-600/40 transition-all duration-300 hover:scale-105 hover:shadow-rose-600/50 active:scale-95 disabled:opacity-50 border-4 border-white/20 backdrop-blur-xl"
           >
+            {/* Pulsing ring effect */}
             <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/30" />
-            <span className="absolute inset-4 rounded-full bg-rose-600 ring-4 ring-white/20" />
-            <span className="relative flex flex-col items-center">
-              <Siren className="h-14 w-14 text-white" strokeWidth={2.5} />
-              <span className="mt-2 text-2xl font-bold tracking-wider text-white">SOS</span>
+            
+            {/* Glass inner ring */}
+            <span className="absolute inset-4 rounded-full bg-rose-600/80 ring-4 ring-white/20 backdrop-blur-md shadow-inner" />
+            
+            {/* Button content */}
+            <span className="relative flex flex-col items-center z-10">
+              <Siren className="h-14 w-14 text-white drop-shadow-lg" strokeWidth={2.5} />
+              <span className="mt-2 text-2xl font-bold tracking-wider text-white drop-shadow-md">SOS</span>
               <span className="mt-1 text-xs font-medium uppercase tracking-widest text-rose-100">
                 Tap to alert
               </span>
@@ -225,13 +232,13 @@ export default function SOS() {
           </button>
 
           {contacts.length === 0 && !loading && (
-            <div className="mt-8 flex items-center gap-2 rounded-lg bg-amber-50/60 px-4 py-3 backdrop-blur-xl text-sm text-amber-700">
+            <div className="mt-8 flex items-center gap-2 rounded-2xl bg-amber-50/60 backdrop-blur-xl backdrop-saturate-150 border border-amber-200/50 px-4 py-3 text-sm text-amber-700 shadow-[4px_4px_12px_rgba(0,0,0,0.06),-2px_-2px_8px_rgba(255,255,255,0.9)]">
               <AlertCircle className="h-4 w-4 shrink-0" />
               No emergency contacts yet — add some for SOS to reach people.
             </div>
           )}
 
-          <div className="mt-10 w-full max-w-md rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl backdrop-saturate-150 p-5 shadow-sm">
+          <div className="mt-10 w-full max-w-md rounded-2xl border border-white/40 bg-white/60 backdrop-blur-xl backdrop-saturate-150 p-5 shadow-[8px_8px_16px_rgba(0,0,0,0.08),-4px_-4px_12px_rgba(255,255,255,0.95)]">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Users className="h-4 w-4 text-slate-400" />
               Will notify ({contacts.length})
@@ -253,20 +260,20 @@ export default function SOS() {
         </div>
       )}
 
-      {/* Confirmation dialog */}
+      {/* Confirmation dialog with glassmorphism */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md glass-frosted border-white/50 shadow-2xl">
           <DialogHeader>
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100">
-              <Siren className="h-7 w-7 text-rose-600" />
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 shadow-lg shadow-rose-500/30">
+              <Siren className="h-7 w-7 text-white" />
             </div>
-            <DialogTitle className="text-center text-xl">Send Emergency SOS?</DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogTitle className="text-center text-xl text-slate-900">Send Emergency SOS?</DialogTitle>
+            <DialogDescription className="text-center text-slate-600">
               This will alert all your emergency contacts with your current location.
               Only use this in a real emergency.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:gap-2">
+          <DialogFooter className="flex gap-2 sm:gap-2 pt-2">
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}
@@ -276,8 +283,9 @@ export default function SOS() {
               <X className="mr-1 h-4 w-4" /> Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={sendSOS}
-              className="flex-1 bg-rose-600 hover:bg-rose-700"
+              className="flex-1"
               disabled={sending}
             >
               {sending ? (
