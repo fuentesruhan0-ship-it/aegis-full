@@ -25,135 +25,125 @@ export const AuthProvider = ({ children }) => {
       try {
         const publicSettings = await base44.app.getPublicSettings();
         setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-        }
-        setIsLoadingPublicSettings(false);
       } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
+        console.warn('App public settings warning:', appError);
+      }
+      setIsLoadingPublicSettings(false);
+
+      // Check for an active session token
+      const currentToken = (typeof localStorage !== 'undefined' && (
+        localStorage.getItem('mock_auth_token') || 
+        localStorage.getItem('base44_access_token')
+      )) || appParams.token;
+
+      if (currentToken) {
+        await checkUserAuth();
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
         setIsLoadingAuth(false);
+        setAuthChecked(true);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error in checkAppState:', error);
       setAuthError({
         type: 'unknown',
         message: error.message || 'An unexpected error occurred'
       });
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
+      setAuthChecked(true);
     }
   };
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
+      setAuthError(null);
     } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
+      console.warn('User auth check failed:', error);
+      setUser(null);
       setIsAuthenticated(false);
-      setAuthChecked(true);
       
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 401 || error.status === 403 || error.message?.includes('authenticated') || error.message?.includes('expired') || error.message?.includes('terminated')) {
         setAuthError({
           type: 'auth_required',
-          message: 'Authentication required'
+          message: error.message || 'Authentication required'
         });
       }
+    } finally {
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
     }
   };
 
   const logout = async (shouldRedirect = true) => {
     console.log('🚪 Starting logout process...');
     
-    // Clear all local state FIRST
+    // Clear React authentication state
     setUser(null);
     setIsAuthenticated(false);
     setAuthError(null);
-    setAuthChecked(false);
+    setAuthChecked(true);
     
-    // Clear ALL authentication-related data from localStorage
-    try {
-      // Base44 tokens
-      localStorage.removeItem('base44_access_token');
-      localStorage.removeItem('token');
-      // Mock auth tokens
-      localStorage.removeItem('mock_auth_token');
-      localStorage.removeItem('mock_user');
-      // App cached data
-      localStorage.removeItem('my_last_position');
-      localStorage.removeItem('aegis_fault_lines_cache');
-      // Clear any other app-specific data
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('aegis_') || key.startsWith('base44_'))) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      console.log('✅ Cleared localStorage');
-    } catch (e) {
-      console.warn('⚠️ Failed to clear localStorage:', e);
-    }
-    
-    // Call Base44 SDK logout (this will clear server-side session)
+    // Terminate the active session in auth provider
     try {
       await base44.auth.logout();
-      console.log('✅ Base44 server logout successful');
+      console.log('✅ Auth session terminated');
     } catch (e) {
-      console.warn('⚠️ Base44 server logout failed:', e);
-      // Continue anyway - local tokens are cleared
+      console.warn('⚠️ Auth logout warning:', e);
     }
     
-    console.log('🔄 Redirecting to login page...');
+    // Clear only session tokens and temporary position cache
+    // Note: NEVER delete registered accounts, emergency contacts, or household records!
+    try {
+      localStorage.removeItem('mock_auth_token');
+      localStorage.removeItem('mock_user');
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('my_last_position');
+    } catch (e) {
+      console.warn('⚠️ Failed to clear session tokens:', e);
+    }
     
-    // Force full page reload to completely reset the app
-    window.location.href = '/login';
+    if (shouldRedirect) {
+      console.log('🔄 Redirecting to login page...');
+      window.location.href = '/login';
+    }
+  };
+
+  const loginAsDemo = async (role = "resident") => {
+    setIsLoadingAuth(true);
+    try {
+      const demoUser = await base44.auth.loginAsDemo(role);
+      setUser(demoUser);
+      setIsAuthenticated(true);
+      setAuthChecked(true);
+      setAuthError(null);
+      return demoUser;
+    } catch (err) {
+      console.error('Demo authentication error:', err);
+      throw err;
+    } finally {
+      setIsLoadingAuth(false);
+    }
+  };
+
+  const updateUser = async (updatedData) => {
+    try {
+      const updated = await base44.auth.updateMe(updatedData);
+      setUser(updated);
+      return updated;
+    } catch (e) {
+      console.warn('Failed to persist user updates to backend:', e);
+      setUser(prev => (prev ? { ...prev, ...updatedData } : null));
+    }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
     base44.auth.redirectToLogin(window.location.href);
   };
 
@@ -168,8 +158,10 @@ export const AuthProvider = ({ children }) => {
       authChecked,
       logout,
       navigateToLogin,
+      loginAsDemo,
       checkUserAuth,
-      checkAppState
+      checkAppState,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>

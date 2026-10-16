@@ -21,10 +21,10 @@ const getAppParams = () => {
 	const mockToken = !isNode && window.localStorage.getItem('mock_auth_token');
 	
 	return {
-		appId: import.meta.env.VITE_BASE44_APP_ID,
+		appId: import.meta.env?.VITE_BASE44_APP_ID || '',
 		token: mockToken || getAccessToken(),
-		functionsVersion: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION,
-		appBaseUrl: import.meta.env.VITE_BASE44_APP_BASE_URL,
+		functionsVersion: import.meta.env?.VITE_BASE44_FUNCTIONS_VERSION || '',
+		appBaseUrl: import.meta.env?.VITE_BASE44_APP_BASE_URL || '',
 	}
 }
 

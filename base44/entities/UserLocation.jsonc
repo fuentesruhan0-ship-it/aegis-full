@@ -24,6 +24,30 @@
     "avatar_url": {
       "type": "string",
       "description": "Optional photo avatar shown on the map instead of emoji"
+    },
+    "sharing_visibility": {
+      "type": "string",
+      "enum": [
+        "community",
+        "trusted_contacts",
+        "emergency_only"
+      ],
+      "default": "community",
+      "description": "Privacy scope for location sharing"
+    },
+    "sharing_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "stopped"
+      ],
+      "default": "active",
+      "description": "Sharing state: active, paused, or stopped"
+    },
+    "last_active_at": {
+      "type": "string",
+      "description": "ISO timestamp of last known location update"
     }
   },
   "required": [

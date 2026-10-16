@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -15,29 +16,44 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("resident");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
-  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     setLoading(true);
     try {
-      const result = await base44.auth.register({ email, password });
+      const result = await base44.auth.register({ 
+        email: email.trim(), 
+        password,
+        phone: phone.trim(),
+        role
+      });
       
-      // For mock auth (development), skip OTP and log in directly
+      // If access token returned, redirect to destination
       if (result?.access_token) {
-        localStorage.setItem('mock_auth_token', result.access_token);
         window.location.href = safeReturnTo();
       } else {
-        // For real Base44 backend, show OTP screen
+        // For real Base44 backend with OTP
         setShowOtp(true);
       }
     } catch (err) {
@@ -213,6 +229,33 @@ export default function Register() {
               onChange={(e) => setPhone(e.target.value)}
               className="pl-10 h-12"
             />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Account Role</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setRole("resident")}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-medium transition-all ${
+                role === "resident"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-500 shadow-sm"
+                  : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
+              }`}
+            >
+              <span>👤 Resident</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("responder")}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-medium transition-all ${
+                role === "responder"
+                  ? "border-red-600 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 dark:border-red-500 shadow-sm"
+                  : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
+              }`}
+            >
+              <span>🚨 Responder</span>
+            </button>
           </div>
         </div>
         <div className="space-y-2">

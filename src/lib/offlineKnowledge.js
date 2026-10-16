@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 // Offline Knowledge Base for AI Assistant
 // Comprehensive earthquake safety Q&A for offline use
 
@@ -130,6 +130,22 @@ export const OFFLINE_KNOWLEDGE = [
     answer: "Pet earthquake safety:\n\n**BEFORE:**\n- Include pet food/water in go-bag\n- Keep collar with ID tag on pet\n- Have carrier/crate accessible\n- Microchip your pet\n- Keep pet med records in go-bag\n- Take recent pet photos (for finding if lost)\n\n**DURING:**\n- Don't try to catch running pet during shaking\n- Take cover yourself first\n- Pets often sense earthquakes early and hide - let them\n\n**AFTER:**\n- Leash dogs/crate cats IMMEDIATELY\n- Scared pets may bite or run\n- Check pet for injuries\n- Secure pets before opening doors/windows\n\n**EVACUATION:**\n- Take pets with you (don't leave behind)\n- Keep on leash/in carrier\n- Have pet supplies in go-bag\n- Many shelters don't accept pets - plan ahead\n- Know pet-friendly hotels/shelters\n\n**BEHAVIOR CHANGES:**\n- Pets may be stressed for days/weeks\n- May hide, not eat, act aggressive\n- Keep routine consistent\n- Be patient and reassuring\n- See vet if injury or severe stress"
   },
 
+  // SCHOOL & STUDENT SAFETY
+  {
+    id: "school-1",
+    category: "school",
+    question: "What should students and teachers do during an earthquake in school?",
+    keywords: ["school", "classroom", "student", "teacher", "campus", "class", "desk", "university", "college"],
+    answer: "If you are a student, teacher, or staff member in a school or campus during an earthquake:\n\n**DURING THE SHAKING:**\n1. **DROP:** Immediately drop to your knees under your school desk.\n2. **COVER:** Hold on to the legs of the desk with both hands and bury your face between your knees to protect your head and neck.\n3. **HOLD ON:** Hold tightly to the desk legs until shaking stops, as desks can slide.\n\n**SPECIAL CAMPUS AREAS:**\n- **Science Labs:** Turn off Bunsen burners immediately if safe. Move away from acid/chemical storage and glass beakers.\n- **School Library:** Move away from free-standing tall book racks which can topple over. Shelter under sturdy reading tables.\n- **Hallways & Corridors:** Drop against an interior wall, protect your head with your school bag or binder, and stay away from glass display cabinets.\n- **Covered Courts / Gyms:** Move away from high-bay lighting, scoreboards, and roof trusses toward open bleachers or outdoor exits once shaking stops.\n\n**AFTER SHAKING STOPS:**\n- Do NOT run, push, or crowd at staircases.\n- Follow your teacher's evacuation instructions to the designated school open ground / oval.\n- Shield your head with a book or bag during the walk.\n- Stay in class formation for headcount and roll call."
+  },
+  {
+    id: "school-2",
+    category: "school",
+    question: "How do schools conduct the Nationwide Simultaneous Earthquake Drill (NSED)?",
+    keywords: ["nsed", "simultaneous drill", "school drill", "deped drill"],
+    answer: "For the DepEd / NDRRMC Nationwide Simultaneous Earthquake Drill (NSED):\n\n**4 PHASES OF A SCHOOL EARTHQUAKE DRILL:**\n1. **Alarm Phase (1 Minute Siren):** Everyone performs *Drop, Cover, and Hold On* under desks.\n2. **Evacuation Phase:** Classes walk orderly in single file ('Duck, Cover, and Walk') with bags protecting heads toward exits.\n3. **Assembly Phase:** Classes assemble at the school open grounds / sports oval away from power lines.\n4. **Headcount & Evaluation Phase:** Teachers conduct roll call, report missing students, and practice medical triage.\n\n**Tip:** Use the **Drill Scheduler** (/drills) in AEGIS to time and score your school earthquake drills!"
+  },
+
   // COMMON MYTHS
   {
     id: "myth-1",
@@ -142,8 +158,17 @@ export const OFFLINE_KNOWLEDGE = [
 
 // Offline response matching
 export function findBestMatch(userQuestion) {
-  const query = userQuestion.toLowerCase();
+  const query = userQuestion.toLowerCase().trim();
   
+  // Conversational greetings
+  if (['hi', 'hello', 'hey', 'kamusta', 'musta', 'good morning', 'good afternoon', 'good evening'].some(g => query === g || query.startsWith(g + ' ') || query.endsWith(' ' + g))) {
+    return {
+      answer: "Hello! I am your **AEGIS AI Emergency Assistant**.\n\nI'm ready to assist you with:\n• **Active Shaking Safety:** Drop, Cover, and Hold On techniques\n• **Emergency Go-Bags:** 72-hour survival supplies and checklist\n• **Evacuation & Recovery:** Family meeting points and structural checks\n• **Local Readiness:** Earthquake advice tailored for Tupi, South Cotabato & PHIVOLCS guidelines\n\nHow can I help you prepare or stay safe today?",
+      source: 'cached',
+      confidence: 'high'
+    };
+  }
+
   // Try exact or close keyword match first
   for (const item of OFFLINE_KNOWLEDGE) {
     if (item.keywords.some(keyword => query.includes(keyword))) {
@@ -168,9 +193,9 @@ export function findBestMatch(userQuestion) {
     }
   }
   
-  // Return general safety response if no match
+  // Return emergency guidance response if no specific keyword match
   return {
-    answer: "I'm working offline with limited knowledge. For this specific question, I recommend:\n\n1. Check the AEGIS app when you're online for detailed guidance\n2. During an earthquake: Drop, Cover, and Hold On\n3. After an earthquake: Check for injuries, expect aftershocks\n4. For emergencies: Use the SOS button or call 911\n\nOnce you're back online, I can provide more detailed answers to your specific questions.",
+    answer: "I am the AEGIS AI Emergency Assistant. Here is essential earthquake safety guidance:\n\n1. **During Shaking:** DROP to your hands and knees, COVER your head/neck under a sturdy table, and HOLD ON.\n2. **Emergency Supplies:** Keep a 72-hour Go-Bag packed near your main exit.\n3. **After Shaking:** Check for injuries, expect aftershocks, and inspect for gas or electrical damage.\n4. **For Immediate Emergencies:** Use the **SOS** button in AEGIS to alert contacts, or dial **911**.\n\nYou can ask me specific questions about go-bags, evacuation plans, structural damage, or emergency first aid!",
     source: 'fallback',
     confidence: 'low'
   };

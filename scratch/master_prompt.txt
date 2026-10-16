@@ -1,0 +1,44 @@
+<USER_REQUEST>
+MASTER DEVELOPMENT PROMPT: AEGIS REAL-TIME COMMUNITY, SHARED DASHBOARDS, LIVE MAP, AND EMERGENCY SOS INTEGRATION
+Existing application: [https://aegis-full-beta.vercel.app/login](https://aegis-full-beta.vercel.app/login)
+PROJECT OVERVIEW
+Enhance my existing AEGIS (AI-Enhanced Earthquake Guidance and Information System) web application into a fully connected, real-time earthquake safety and community response platform.
+The application already has a user authentication system, dashboards, a Community Map, Emergency SOS, Emergency Contacts, My Household, Community Hazard Reports, Community Announcements, Evacuation Centers, Earthquake Drill Scheduler, Recovery Progress Tracker, and other disaster preparedness features.
+I have provided screenshots of the existing application. Use them as the visual reference and preserve the current AEGIS design, navigation, colors, layouts, icons, cards, and responsive behavior.
+IMPORTANT: Do not rebuild the application from scratch. Do not create a separate application or replace the existing design. Inspect the existing source code, database, authentication, routes, components, and backend first. Implement the following features by integrating them into the existing system.
+1. REAL-TIME COMMUNITY CONNECTION
+The main objective is to allow registered AEGIS users to interact with one another through their respective dashboards.
+Every authenticated user should be connected to the same shared community system rather than seeing isolated or hardcoded data.
+Requirements:
+When multiple users register and log in using different accounts or devices, they must be able to see shared community information.
+Changes made by one user should become available to other authorized users without requiring them to manually refresh the page.
+Use real-time subscriptions, WebSockets, Server-Sent Events, or the appropriate technology supported by the existing stack.
+Synchronize user presence, location-sharing sessions, hazard reports, announcements, SOS events, safety check-ins, and other rel
+<truncated 19512 bytes>
+ise summary of changes, configuration requirements, database migrations, environment variables, and tests performed.
+Do not stop after presenting a plan or producing frontend components. Implement the actual working changes in the existing project.
+If credentials or external provider configuration are missing, implement the integration as far as possible, identify the exact missing configuration, and never claim that an unconfigured external service is working.
+FINAL OBJECTIVE
+Transform AEGIS into one connected earthquake preparedness and emergency response community where:
+Users can see other users who have opted into community location sharing on the same Community Map.
+Every authorized user sees synchronized community hazards, announcements, and relevant emergency activity.
+Residents can report hazards and interact with community information.
+The SOS button alerts the actual emergency contacts registered by the user through configured delivery channels.
+Personal household records, private contacts, and sensitive location information remain protected.
+All existing AEGIS modules continue working together.
+The entire system uses real database records and real integrations rather than hardcoded or simulated data.
+Priority order: Real SOS functionality and contact delivery, secure shared location visibility, community hazard reporting, verified announcements, and reliable real-time synchronization. Preserve the existing interface and implement working end-to-end functionality first.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-14T22:11:18+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\flean\Documents\aegis-full\index.html (LANGUAGE_HTML)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\flean\Documents\aegis-full\vercel.json (LANGUAGE_JSON)
+- c:\Users\flean\Documents\aegis-full\index.html (LANGUAGE_HTML)
+Browser State:
+  Page EF1320E915C63F1E5F1A35A726F7434E () - http://localhost:5173/landing [ACTIVE]
+    Viewport: 0x0, Page Height: 0
+</ADDITIONAL_METADATA>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -14,22 +15,9 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Clear any stale authentication state on mount
+  // Clear error state on mount
   React.useEffect(() => {
-    // Clear error state
     setError("");
-    
-    // Ensure we start with a clean slate
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('clear_access_token') !== 'true') {
-        // Clear any stale tokens
-        localStorage.removeItem('base44_access_token');
-        localStorage.removeItem('token');
-      }
-    } catch (e) {
-      console.warn('Failed to clear tokens:', e);
-    }
   }, []);
   
   // Post-login destination (e.g. the MCP OAuth consent page sends users here
@@ -44,37 +32,17 @@ export default function Login() {
     console.log('🔐 Attempting login for:', email);
     
     try {
-      const result = await base44.auth.loginViaEmailPassword(email, password);
+      const result = await base44.auth.loginViaEmailPassword(email.trim(), password);
       console.log('✅ Login successful:', result);
       
-      // Wait a moment to ensure token is stored
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait a moment to ensure session is stored
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Force a full reload to ensure fresh state
       console.log('🔄 Redirecting to:', returnTo);
       window.location.href = returnTo;
     } catch (err) {
       console.error('❌ Login error:', err);
-      console.error('Error details:', {
-        message: err.message,
-        status: err.status,
-        data: err.data
-      });
-      
-      // Provide more helpful error messages
-      let errorMessage = "Invalid email or password. Please check your credentials and try again.";
-      
-      if (err.status === 401) {
-        errorMessage = "Invalid email or password. If you just signed out, please wait a few seconds and try again, or create a new account.";
-      } else if (err.status === 429) {
-        errorMessage = "Too many login attempts. Please wait a few minutes before trying again.";
-      } else if (err.status === 403) {
-        errorMessage = "Your account may be temporarily locked. Please try creating a new account or contact support.";
-      } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
-        errorMessage = "Network error. Please check your internet connection and try again.";
-      }
-      
-      setError(errorMessage);
+      setError(err.message || "Invalid email or password. Please check your credentials and try again.");
     } finally {
       setLoading(false);
     }
@@ -172,6 +140,7 @@ export default function Login() {
           )}
         </Button>
       </form>
+
 
       {/* Note about Google OAuth */}
       <div className="mt-6 text-center">

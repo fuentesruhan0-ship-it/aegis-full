@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AppLayout from '@/components/AppLayout';
 import Login from '@/pages/Login';
+import Landing from '@/pages/Landing';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -22,6 +23,16 @@ import HazardReports from '@/pages/HazardReports';
 import Announcements from '@/pages/Announcements';
 import Profile from '@/pages/Profile';
 import CommunityMap from '@/pages/CommunityMap';
+import RiskAssessment from '@/pages/RiskAssessment';
+import GoBag from '@/pages/GoBag';
+import DrillScheduler from '@/pages/DrillScheduler';
+import KnowledgeHub from '@/pages/KnowledgeHub';
+import EvacuationLocator from '@/pages/EvacuationLocator';
+import DamageVault from '@/pages/DamageVault';
+import InfrastructureStatus from '@/pages/InfrastructureStatus';
+import RecoveryTracker from '@/pages/RecoveryTracker';
+import VolunteerCoordination from '@/pages/VolunteerCoordination';
+import ModerationQueue from '@/pages/ModerationQueue';
 import { Navigate } from 'react-router-dom';
 
 const AuthenticatedApp = () => {
@@ -50,6 +61,9 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
+      {/* Public landing page */}
+      <Route path="/landing" element={<Landing />} />
+
       {/* Auth routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -57,7 +71,7 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Authenticated app routes */}
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/landing" replace />} />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/sos" element={<SOS />} />
@@ -68,6 +82,16 @@ const AuthenticatedApp = () => {
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/map" element={<CommunityMap />} />
+          <Route path="/risk-assessment" element={<RiskAssessment />} />
+          <Route path="/go-bag" element={<GoBag />} />
+          <Route path="/drills" element={<DrillScheduler />} />
+          <Route path="/knowledge" element={<KnowledgeHub />} />
+          <Route path="/evacuation" element={<EvacuationLocator />} />
+          <Route path="/damage-vault" element={<DamageVault />} />
+          <Route path="/infrastructure" element={<InfrastructureStatus />} />
+          <Route path="/recovery" element={<RecoveryTracker />} />
+          <Route path="/volunteers" element={<VolunteerCoordination />} />
+          <Route path="/moderation" element={<ModerationQueue />} />
         </Route>
       </Route>
 

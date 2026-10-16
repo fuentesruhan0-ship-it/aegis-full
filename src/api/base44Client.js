@@ -1,11 +1,10 @@
 import { createClient, getAccessToken } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
-import { mockBase44 } from '@/lib/mockAuth';
+import { appParams } from '../lib/app-params.js';
+import { mockBase44 } from '../lib/mockAuth.js';
 
 const { appId, functionsVersion, appBaseUrl } = appParams;
 
-// Use mock auth if no backend URL is configured or in development
-const USE_MOCK = !appBaseUrl || import.meta.env.DEV;
+const USE_MOCK = !appBaseUrl || !!import.meta.env?.DEV;
 
 // Function to create a fresh client instance
 const createBase44Client = () => {
@@ -26,10 +25,11 @@ const createBase44Client = () => {
 };
 
 // Export a proxy that always uses the latest token
-export const base44 = new Proxy({}, {
+/** @type {ReturnType<typeof createBase44Client>} */
+export const base44 = /** @type {any} */ (new Proxy({}, {
   get(target, prop) {
     // Create a fresh client for each operation to ensure latest token is used
     const client = createBase44Client();
     return client[prop];
   }
-});
+}));

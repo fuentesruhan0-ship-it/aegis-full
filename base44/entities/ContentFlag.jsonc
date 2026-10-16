@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "hazard_report",
+        "announcement",
+        "infrastructure_status",
+        "volunteer_post",
+        "comment"
+      ],
+      "description": "What is being flagged"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of the flagged record"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "spam",
+        "misinformation",
+        "harassment",
+        "inappropriate",
+        "other"
+      ],
+      "description": "Why the user is flagging this content"
+    },
+    "details": {
+      "type": "string",
+      "description": "Optional additional details from the reporter"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "dismissed",
+        "action_taken"
+      ],
+      "default": "open",
+      "description": "Moderation status of the flag"
+    }
+  },
+  "required": [
+    "target_type",
+    "target_id",
+    "reason"
+  ],
+  "name": "ContentFlag",
+  "type": "object"
+}

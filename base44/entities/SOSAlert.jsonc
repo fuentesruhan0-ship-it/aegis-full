@@ -29,6 +29,36 @@
       ],
       "default": "active",
       "description": "Current status of the SOS alert"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Display name of the person who sent the SOS"
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "Account ID of the sender"
+    },
+    "sender_phone": {
+      "type": "string",
+      "description": "Contact phone number of the sender"
+    },
+    "primary_contact_name": {
+      "type": "string",
+      "description": "Name of the primary emergency contact recipient"
+    },
+    "primary_contact_phone": {
+      "type": "string",
+      "description": "Phone number of the primary emergency contact recipient"
+    },
+    "gps_available": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether real GPS coordinates were captured"
+    },
+    "contact_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of emergency contacts notified"
     }
   },
   "required": [

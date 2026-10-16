@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "hazard_report",
+        "announcement",
+        "infrastructure_status",
+        "volunteer_post"
+      ],
+      "description": "Which module this comment belongs to"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of the parent record (e.g. hazard report ID)"
+    },
+    "parent_comment_id": {
+      "type": "string",
+      "description": "For threaded replies — null/empty for top-level comments"
+    },
+    "body": {
+      "type": "string",
+      "description": "Comment text (max ~2000 chars enforced in code)"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the commenter (denormalized for fast rendering)"
+    },
+    "author_role": {
+      "type": "string",
+      "description": "Role badge of the commenter (resident, admin, etc.)"
+    },
+    "is_hidden": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin can hide inappropriate comments"
+    }
+  },
+  "required": [
+    "target_type",
+    "target_id",
+    "body"
+  ],
+  "name": "Comment",
+  "type": "object"
+}

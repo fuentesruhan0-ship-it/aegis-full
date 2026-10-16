@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS - Complete System Architecture Sequence Flow</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --accent: #dc2626;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1350px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #eff6ff;
+      color: #1d4ed8;
+      margin-bottom: 0.35rem;
+    }
+
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: #0f172a;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.2rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.15rem;
+      border-radius: 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+
+    .diagram-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1.15rem 1.75rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+
+    .tag {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      padding: 0.25rem 0.75rem;
+      font-weight: 600;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .diagram-body {
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      justify-content: center;
+      background: #ffffff;
+      overflow-x: auto;
+    }
+
+    .diagram-body svg {
+      width: 100% !important;
+      max-width: 1200px !important;
+      height: auto !important;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        background: #ffffff;
+      }
+      header, .actions, .feature-tags {
+        display: none !important;
+      }
+      .diagram-card {
+        border: none;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <span class="badge">Comprehensive Architecture</span>
+        <h1>AEGIS — Complete Application Sequence Flow</h1>
+        <p class="subtitle">Complete continuous end-to-end process showcasing all features across preparedness, alert, response, and recovery.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="downloadSVG()">
+          ⬇️ Download SVG
+        </button>
+        <button class="btn btn-primary" onclick="downloadPNG()">
+          ⬇️ Download PNG (High-Res)
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          🖨️ Print / PDF
+        </button>
+      </div>
+    </header>
+
+    <div class="diagram-card">
+      <div class="feature-tags">
+        <span class="tag">👤 Profile & Emergency Contacts</span>
+        <span class="tag">📊 Risk Assessment</span>
+        <span class="tag">🎒 Go-Bag Checklist</span>
+        <span class="tag">📅 Drill Scheduler</span>
+        <span class="tag">📚 Knowledge Hub</span>
+        <span class="tag">📢 Announcements</span>
+        <span class="tag">⚡ Infrastructure Status</span>
+        <span class="tag">🧠 AI Disaster Assistant</span>
+        <span class="tag">⚠️ Hazard Reports</span>
+        <span class="tag">🛡️ Moderation Queue</span>
+        <span class="tag">🗺️ Community Map</span>
+        <span class="tag">🏠 Evacuation Locator</span>
+        <span class="tag">🚨 Emergency SOS</span>
+        <span class="tag">📞 Direct Phone Dialing</span>
+        <span class="tag">👨‍👩‍👧 Household Check-In</span>
+        <span class="tag">🤝 Volunteer Coordination</span>
+        <span class="tag">📷 Damage Vault</span>
+        <span class="tag">📈 Recovery Tracker</span>
+      </div>
+
+      <div class="diagram-body" id="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+
+    actor Citizen as 👤 Citizen
+    participant App as 📱 AEGIS App
+    participant Storage as 💾 Offline Storage
+    participant Backend as ☁️ Base44 Backend
+    participant AI as 🧠 AI Disaster Assistant
+    participant Phone as 📞 Native Phone Dialer
+    actor DRRMO as 🛡️ DRRMO & Volunteers
+
+    Note over Citizen, DRRMO: Preparedness & Household Readiness
+    Citizen->>App: Sets up Emergency Contacts & Medical Info in Profile
+    App->>Storage: Cache emergency contacts, hotlines & Knowledge Hub offline
+    App->>Backend: Sync profile & household members
+    Citizen->>App: Completes Risk Assessment & verifies Go-Bag Checklist
+    Citizen->>App: Schedules community evacuation drill in Drill Scheduler
+
+    Note over Citizen, DRRMO: Early Warning & AI Disaster Advisory
+    DRRMO->>Backend: Broadcasts calamity alert & updates Infrastructure Status
+    Backend-->>App: Push notification & update Announcements feed
+    App-->>Citizen: Alert: "Severe Weather Warning & Lifeline Disruptions"
+    Citizen->>App: Consults Assistant ("Storm surge safety protocols")
+    App->>AI: Evaluate query with local disaster context (Gemini / Offline fallback)
+    AI-->>App: Return immediate safety instructions & emergency advice
+    App-->>Citizen: Display tailored guidance with 1-click hotline call buttons
+
+    Note over Citizen, DRRMO: Citizen Hazard Reporting & Community Map
+    Citizen->>App: Submits localized street flood with GPS & photo in Hazard Reports
+    App->>Backend: Submit citizen hazard report
+    DRRMO->>Backend: Reviews & verifies incident in Moderation Queue
+    Backend-->>App: Update Community Map with interactive verified hazard marker
+
+    Note over Citizen, DRRMO: Evacuation Locator & Emergency SOS
+    Citizen->>App: Checks Evacuation Locator for nearest open shelter route
+    App->>Backend: Fetch real-time shelter capacity, amenities & safe routes
+    Backend-->>App: Return nearest evacuation center with live navigation
+    Citizen->>App: Triggers Emergency SOS (or 3-sec quick countdown)
+    App->>Backend: Dispatch live GPS distress beacon (status: ACTIVE)
+    Backend-->>DRRMO: Sound critical audible distress alarm & pin location on console
+
+    Note over Citizen, Phone: Direct Cellular Phone Call
+    App->>Storage: Retrieve primary emergency contact / 911 hotline
+    Storage-->>App: Return formatted phone number
+    App->>Phone: Execute direct call via window.location.href = "tel:0917XXXXXXX"
+    Phone-->>Citizen: Launch OS phone dialer with pre-dialed contact / hotline
+    Citizen->>DRRMO: Connected via direct voice call for immediate rescue
+
+    Note over Citizen, DRRMO: Evacuation, Volunteer Relief & Recovery
+    Citizen->>App: Arrives at shelter & submits Household Check-In (Headcount & Needs)
+    App->>Backend: Sync family safety status, elderly/infant counts & medical flags
+    Backend-->>DRRMO: Update real-time Shelter Roster & Relief Distribution Analytics
+    DRRMO->>App: Mobilize teams via Volunteer Coordination for food & medical aid
+    Citizen->>App: Uploads property photos to Damage Vault for calamity claims
+    Backend-->>Citizen: Track government relief & aid status in Recovery Tracker
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      sequence: {
+        diagramMarginX: 30,
+        diagramMarginY: 20,
+        actorMargin: 50,
+        width: 155,
+        height: 55,
+        boxMargin: 8,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 32,
+        mirrorActors: false
+      }
+    });
+
+    function downloadSVG() {
+      const svg = document.querySelector('#diagram-container svg');
+      if (!svg) return alert('Rendering diagram, please wait a moment...');
+
+      const clone = svg.cloneNode(true);
+      const box = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : svg.getBoundingClientRect();
+      clone.setAttribute('width', box.width || 1200);
+      clone.setAttribute('height', box.height || 1200);
+
+      const svgData = new XMLSerializer().serializeToString(clone);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'aegis-all-features-sequence-diagram.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadPNG() {
+      const svg = document.querySelector('#diagram-container svg');
+      if (!svg) return alert('Rendering diagram, please wait a moment...');
+
+      const box = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : svg.getBoundingClientRect();
+      const origWidth = box.width || 1200;
+      const origHeight = box.height || 1200;
+
+      const clone = svg.cloneNode(true);
+      clone.setAttribute('width', origWidth);
+      clone.setAttribute('height', origHeight);
+
+      const svgData = new XMLSerializer().serializeToString(clone);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = function () {
+        const scale = 2.5; // High definition
+        const canvas = document.createElement('canvas');
+        canvas.width = origWidth * scale;
+        canvas.height = origHeight * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, origWidth, origHeight);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = 'aegis-all-features-sequence-diagram.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+  </script>
+</body>
+</html>

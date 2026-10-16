@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
+// @ts-nocheck
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,10 @@ import {
 
 const ROLES = [
   { value: "resident", label: "Resident", desc: "Personal risk profile, household tools, SOS, hazard reporting" },
-  { value: "student", label: "Student", desc: "Knowledge Hub, Drill Scheduler, Educational Resources" },
+  { value: "responder", label: "Emergency Responder", desc: "SOS alerts & household safety check-in access" },
   { value: "lgu", label: "LGU Staff", desc: "Real-time hazard visibility & infrastructure monitoring" },
   { value: "drrmo", label: "DRRMO Staff", desc: "Verified advisory posting & volunteer coordination" },
   { value: "volunteer", label: "Volunteer", desc: "Matching with LGUs & affected communities" },
-  { value: "responder", label: "Emergency Responder", desc: "SOS alerts & household safety check-in access" },
 ];
 // Geolocation helpers
 function getLocation() {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import NotificationBell from "@/components/interactions/NotificationBell";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,39 +13,47 @@ import {
 } from "@/components/ui/dialog";
 import {
   Shield, LayoutDashboard, Siren, Home, Users, Phone, Bot,
-  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, ChevronRight, MapPin
+  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, ChevronRight, MapPin, ShieldAlert, Backpack, BookOpen, Tent, FolderLock, Building2, HeartHandshake, Heart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABELS = {
   admin: "Administrator",
   resident: "Resident",
-  student: "Student",
+  responder: "Emergency Responder",
   lgu: "LGU Staff",
   drrmo: "DRRMO Staff",
   volunteer: "Volunteer",
-  responder: "Emergency Responder",
 };
 
 const ROLE_COLORS = {
   admin: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-slate-100/80 backdrop-blur-xl text-slate-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
   resident: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-100/80 backdrop-blur-xl text-blue-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
-  student: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100/80 backdrop-blur-xl text-indigo-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
+  responder: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-100/80 backdrop-blur-xl text-red-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
   lgu: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-amber-100/80 backdrop-blur-xl text-amber-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
   drrmo: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-orange-100/80 backdrop-blur-xl text-orange-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
   volunteer: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100/80 backdrop-blur-xl text-emerald-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
-  responder: "rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-100/80 backdrop-blur-xl text-red-700 shadow-[2px_2px_4px_rgba(0,0,0,0.1),-1px_-1px_3px_rgba(255,255,255,0.8)]",
 };
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: null },
   { to: "/sos", label: "Emergency SOS", icon: Siren, roles: null, urgent: true },
-  { to: "/household", label: "My Household", icon: Home, roles: ["resident", "student", "admin"] },
-  { to: "/contacts", label: "Emergency Contacts", icon: Phone, roles: ["resident", "student", "admin"] },
+  { to: "/household", label: "My Household", icon: Home, roles: ["resident", "admin", "responder"] },
+  { to: "/contacts", label: "Emergency Contacts", icon: Phone, roles: ["resident", "admin", "responder"] },
   { to: "/assistant", label: "AI Assistant", icon: Bot, roles: null },
+  { to: "/risk-assessment", label: "Risk Assessment", icon: ShieldAlert, roles: null },
+  { to: "/go-bag", label: "Go-Bag & Checklist", icon: Backpack, roles: null },
+  { to: "/drills", label: "Drill Scheduler", icon: Siren, roles: null },
+  { to: "/knowledge", label: "Knowledge Hub", icon: BookOpen, roles: null },
+  { to: "/evacuation", label: "Evacuation Locator", icon: Tent, roles: null },
+  { to: "/damage-vault", label: "Damage & Vault", icon: FolderLock, roles: null },
+  { to: "/infrastructure", label: "Infrastructure Status", icon: Building2, roles: null },
+  { to: "/recovery", label: "Recovery Tracker", icon: HeartHandshake, roles: null },
+  { to: "/volunteers", label: "Volunteer Hub", icon: Heart, roles: null },
   { to: "/map", label: "Community Map", icon: MapPin, roles: null },
   { to: "/hazards", label: "Hazard Reports", icon: AlertTriangle, roles: null },
   { to: "/announcements", label: "Announcements", icon: Megaphone, roles: null },
+  { to: "/moderation", label: "Moderation Queue", icon: ShieldAlert, roles: ["admin", "drrmo", "lgu"] },
   { to: "/profile", label: "Profile & Settings", icon: UserCircle, roles: null },
 ];
 
@@ -65,15 +74,19 @@ export default function AppLayout() {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      {/* Logo - Enhanced with Clay Shield */}
+      {/* Logo - Enhanced with Custom AEGIS Logo */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-white/10">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-[8px_8px_16px_rgba(0,0,0,0.3),-4px_-4px_12px_rgba(59,130,246,0.3)]">
-          <Shield className="h-6 w-6 text-white" strokeWidth={2.5} />
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-slate-950/60 border border-cyan-500/30 shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+          <img
+            src="/logo.png"
+            alt="AEGIS Logo"
+            className="h-9 w-9 object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]"
+          />
         </div>
         <div>
           <h1 className="text-lg font-bold tracking-tight text-white">AEGIS</h1>
-          <p className="text-[11px] font-medium uppercase tracking-wider text-blue-300">
-            Earthquake Safety
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+            Earthquake Guidance
           </p>
         </div>
       </div>
@@ -214,6 +227,7 @@ export default function AppLayout() {
       {/* Main content */}
       <div className="lg:pl-64 relative z-10">
         {/* Mobile top bar */}
+        {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/40 bg-gradient-to-b from-white/90 to-white/80 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 lg:hidden shadow-sm">
           <button
             onClick={() => setMobileOpen(true)}
@@ -222,14 +236,29 @@ export default function AppLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-600" />
+            <img src="/logo.png" alt="AEGIS Logo" className="h-6 w-6 object-contain" />
             <span className="font-bold tracking-tight text-slate-900">AEGIS</span>
           </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <NavLink
+              to="/sos"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white shadow-md shadow-rose-600/30 active:scale-95 transition-transform"
+            >
+              <Siren className="h-4 w-4" />
+            </NavLink>
+          </div>
+        </header>
+
+        {/* Desktop top bar */}
+        <header className="sticky top-0 z-30 hidden lg:flex items-center justify-end border-b border-white/40 bg-gradient-to-b from-white/90 to-white/80 px-6 py-2.5 backdrop-blur-xl backdrop-saturate-150 shadow-sm gap-3">
+          <NotificationBell />
           <NavLink
             to="/sos"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white shadow-md shadow-rose-600/30 active:scale-95 transition-transform"
+            className="flex h-8 items-center gap-1.5 rounded-full bg-rose-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-rose-600/30 hover:bg-rose-700 active:scale-95 transition-all"
           >
-            <Siren className="h-4 w-4" />
+            <Siren className="h-3.5 w-3.5" />
+            Emergency SOS
           </NavLink>
         </header>
 

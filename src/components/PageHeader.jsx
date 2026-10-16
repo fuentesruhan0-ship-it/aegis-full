@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export default function PageHeader({ title, description, icon: Icon, actions, accent }) {
+export default function PageHeader({ title, description, icon: Icon, actions = null, accent = "blue" }) {
   return (
     <div className="mb-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

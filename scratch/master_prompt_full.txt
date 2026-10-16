@@ -1,0 +1,305 @@
+<USER_REQUEST>
+MASTER DEVELOPMENT PROMPT: AEGIS REAL-TIME COMMUNITY, SHARED DASHBOARDS, LIVE MAP, AND EMERGENCY SOS INTEGRATION
+Existing application: [https://aegis-full-beta.vercel.app/login](https://aegis-full-beta.vercel.app/login)
+PROJECT OVERVIEW
+Enhance my existing AEGIS (AI-Enhanced Earthquake Guidance and Information System) web application into a fully connected, real-time earthquake safety and community response platform.
+The application already has a user authentication system, dashboards, a Community Map, Emergency SOS, Emergency Contacts, My Household, Community Hazard Reports, Community Announcements, Evacuation Centers, Earthquake Drill Scheduler, Recovery Progress Tracker, and other disaster preparedness features.
+I have provided screenshots of the existing application. Use them as the visual reference and preserve the current AEGIS design, navigation, colors, layouts, icons, cards, and responsive behavior.
+IMPORTANT: Do not rebuild the application from scratch. Do not create a separate application or replace the existing design. Inspect the existing source code, database, authentication, routes, components, and backend first. Implement the following features by integrating them into the existing system.
+1. REAL-TIME COMMUNITY CONNECTION
+The main objective is to allow registered AEGIS users to interact with one another through their respective dashboards.
+Every authenticated user should be connected to the same shared community system rather than seeing isolated or hardcoded data.
+Requirements:
+When multiple users register and log in using different accounts or devices, they must be able to see shared community information.
+Changes made by one user should become available to other authorized users without requiring them to manually refresh the page.
+Use real-time subscriptions, WebSockets, Server-Sent Events, or the appropriate technology supported by the existing stack.
+Synchronize user presence, location-sharing sessions, hazard reports, announcements, SOS events, safety check-ins, and other relevant community activities.
+Persist all important records in the existing database.
+Ensure that actions performed by one account are reflected in the correct dashboards of other accounts.
+Remove hardcoded sample users and fake interactions from production functionality.
+Implement actual end-to-end behavior. A frontend that merely displays sample users, simulated locations, or fake notifications does not satisfy this requirement.
+2. COMMUNITY MAP: SHOW ALL USERS WHO OPT IN TO LOCATION SHARING
+Enhance the existing Community Map, which currently displays map controls, earthquake and fault layers, and a people-sharing panel.
+Map requirements
+Display a distinct map marker or avatar icon for every registered user who has explicitly enabled community location sharing and has a valid, sufficiently recent location.
+Each user must see the same eligible community members on the map, subject to their location-sharing preferences and permissions.
+When a user logs in on another device and enables location sharing, their marker should appear on other users' maps in near real time.
+Update markers when users move and remove or mark them offline when their sharing session ends or their location becomes stale.
+Clicking a marker should open a small profile card showing the user's display name, avatar, online or last-seen status, sharing status, and available community actions.
+Include a panel listing the people currently sharing their locations, similar to the existing "People on the map" panel.
+Provide controls for enabling or disabling location sharing, pausing sharing, and ending a sharing session.
+Keep the existing map layers, zoom controls, earthquake markers, fault lines, and other map functionality working.
+Provide map filters for viewing people, active SOS events, hazard reports, evacuation centers, and other relevant community information.
+Update markers efficiently without unnecessarily reloading the entire map.
+Location and privacy requirements
+Obtain the user's location through the browser's geolocation API with explicit permission.
+Do not fabricate GPS coordinates or use a hardcoded location as a real user's location.
+Store the location timestamp and sharing status.
+Do not display a user's precise location to every account by default.
+Give users clear control over whether their location is visible to the community, trusted contacts, or only during an active emergency.
+Never expose private location histories, household details, emergency contact numbers, or other sensitive personal information to the public.
+Show clear states for permission denied, location unavailable, offline users, and stale location data.
+The goal is for users to see one another through a genuinely shared, permission-based map rather than each user's dashboard showing only their own icon.
+3. PUBLIC COMMUNITY FEATURES
+AEGIS should support an open community experience for earthquake preparedness and disaster response.
+Registered users should be able to view shared community information, contribute reports, and interact with other users through controlled community features.
+Implement the following:
+A. Community Hazard Reports
+Allow users to report cracked roads, damaged buildings, landslides, fires, gas leaks, fallen electrical lines, and other hazards.
+Include a report title, hazard category, description, location, time reported, severity, and optional photo attachments.
+Allow users to view reports submitted by other community members.
+Display geolocated reports on the Community Map.
+Provide report details and status updates.
+Allow users to confirm, comment on, or flag a report as potentially inaccurate.
+Allow authorized moderators or disaster-management personnel to verify reports and update their status.
+Provide statuses such as Pending Verification, Verified, In Progress, Resolved, and Rejected.
+Show the latest report updates to users in real time.
+Prevent duplicate submissions where practical and maintain a record of verification and status changes.
+B. Community Announcements
+Allow authorized users to publish community announcements.
+Allow designated administrators, LGU personnel, or DRRMOs to publish verified emergency advisories.
+Display public announcements on the appropriate dashboards.
+Support announcement categories, publication dates, priority levels, and expiration dates.
+Allow users to acknowledge announcements and receive notifications for important updates.
+Clearly distinguish official, verified announcements from ordinary community posts.
+Ordinary users must not be able to impersonate officials or mark their own announcements as officially verified.
+C. Community Interaction
+Implement appropriate interaction features, including:
+Comments on hazard reports.
+Replies to report updates where appropriate.
+Confirmation that a reported hazard has been seen by other users.
+Community activity notifications.
+Publicly visible user contributions and report histories, subject to privacy settings.
+A community feed for important reports, verified advisories, and emergency updates.
+Optional direct messaging or contact requests between consenting users.
+Do not expose personal phone numbers or private household information simply because a user participates in the community.
+4. EMERGENCY SOS INTEGRATION WITH REGISTERED CONTACTS
+The existing Emergency SOS page contains a large red SOS button and a list of emergency contacts. Integrate this page with the actual registered contacts and notification system.
+SOS activation workflow
+When a user activates the SOS button:
+Display a confirmation mechanism that reduces accidental activation while keeping emergency activation fast.
+Create a persistent SOS incident associated with the authenticated user.
+Capture the user's current GPS coordinates when permission and device availability allow it.
+Record the activation timestamp, location accuracy, and incident status.
+Retrieve the user's saved emergency contacts from the database.
+Send an emergency alert to every eligible registered contact associated with that user.
+Include the sender's name, emergency message, timestamp, and an appropriate secure location link.
+Notify the contact through the configured delivery channels, such as push notifications, SMS, or email.
+Display the active SOS event on the Community Map according to the sender's sharing settings and the application's emergency visibility policy.
+Show authorized recipients the incident details and provide a way to open directions to the sender's shared location.
+Allow recipients to acknowledge the alert or indicate that they are responding.
+Keep the sender informed about delivery status, acknowledgments, and any delivery failures.
+Contact management
+The Emergency Contacts page must support:
+Adding a contact with a name, phone number, and optional email.
+Editing and deleting contacts.
+Validating contact details.
+Verifying contact ownership or consent where appropriate.
+Selecting which contacts receive SOS notifications.
+Displaying whether each contact is verified and which notification channels are available.
+Saving contact records persistently in the database.
+Synchronizing contact changes with the SOS workflow.
+The system must use the actual contacts entered by each user. Do not send alerts to hardcoded demonstration numbers or unrelated users.
+SOS cancellation and incident handling
+Allow the sender to cancel or resolve an active incident when appropriate.
+Record the incident's status and relevant timestamps.
+Notify recipients of important cancellation or resolution updates.
+Prevent duplicate alerts caused by repeated clicks or network retries.
+Provide a reliable retry mechanism for failed notifications.
+Maintain an audit trail of alert attempts and delivery results.
+Critical: Do not display a message claiming that an alert was successfully delivered unless the notification provider confirms delivery at the relevant level. Distinguish between queued, sent, delivered, acknowledged, and failed where supported.
+If the sender has no registered emergency contacts, display a clear warning and provide a shortcut to the Emergency Contacts page.
+If the location cannot be obtained, still allow the SOS workflow to proceed with an explicit indication that the current location is unavailable. Do not block a genuine emergency alert solely because GPS access failed.
+Do not represent a database record or an in-app notification as an actual SMS or email sent to a contact.
+5. SHARED USER DASHBOARDS
+Connect the relevant dashboards so users can see community activity without losing access to their personal information.
+Dashboard widgets
+Add or enhance widgets for:
+Community members currently sharing their locations.
+Active and recently reported hazards.
+Verified emergency announcements.
+Active SOS incidents visible to the current user under the sharing policy.
+Nearby evacuation centers and safe open spaces.
+Recent community activity.
+Personal safety check-in status.
+Current household and emergency contact status.
+Community response updates.
+The dashboard should show the same underlying community data to all authorized users while preserving user-specific sections for their household, emergency contacts, recovery applications, private documents, and personal preparedness records.
+Clicking a widget should navigate to the corresponding existing module.
+Update shared widgets in real time when new data arrives.
+6. CONNECT ALL EXISTING MODULES
+Integrate the new functionality with the existing AEGIS modules rather than building duplicate pages.
+My Household: Maintain private household membership, shared evacuation plans, and safety check-ins.
+Emergency Contacts: Supply the actual contact records used by the SOS workflow.
+Emergency SOS: Create and manage real incidents and notify the correct recipients.
+Community Map: Display eligible shared user locations, hazards, and emergency markers.
+Hazard Reports: Share reports with the community and update map markers.
+Announcements: Publish shared community updates and verified advisories.
+Evacuation Locator: Display relevant evacuation centers and safe open spaces.
+Drill Scheduler: Save drill schedules and completion records.
+Risk Assessment: Preserve personalized risk assessments.
+Go-Bag and Checklist: Maintain individual or household preparedness records.
+Recovery Tracker: Keep personal applications private while displaying any explicitly designated public recovery information.
+Infrastructure Status: Share authorized status updates about roads, bridges, buildings, and utilities.
+Volunteer Hub: Support appropriate volunteer coordination and participation.
+AI Assistant: Use verified AEGIS information to answer preparedness questions without inventing emergency data.
+Ensure that these modules share the correct records and do not display conflicting information.
+7. DATABASE AND BACKEND INTEGRATION
+Inspect the existing backend and database before making schema changes.
+Reuse the existing database, authentication system, and project conventions wherever possible. Do not replace a working backend with an unrelated technology just to implement these features.
+Create or adapt the required data models for:
+Users and public profiles.
+Location-sharing sessions and current shared locations.
+Emergency contacts.
+SOS incidents and recipients.
+Notification delivery attempts.
+Hazard reports, attachments, comments, and verification history.
+Community announcements and acknowledgments.
+Community activity events.
+Safety check-ins.
+User privacy and notification preferences.
+Every record must have appropriate ownership, timestamps, validation, and relationships.
+Use database transactions or equivalent safeguards for critical multi-record operations. Add appropriate indexes for user IDs, incident IDs, report statuses, timestamps, and geospatial queries where supported.
+Use authenticated server-side operations for all sensitive actions. Never trust client-supplied user IDs to determine record ownership.
+If the existing application uses a different data model, adapt these requirements to its architecture rather than creating incompatible duplicate tables.
+8. AUTHENTICATION AND AUTHORIZATION
+Preserve the current login and registration flow at:
+[https://aegis-full-beta.vercel.app/login](https://aegis-full-beta.vercel.app/login)
+Ensure that:
+Every user has a stable, unique account identifier.
+Users can access their own personal dashboard.
+Shared community data is accessible according to the application's community policy.
+Private records are accessible only to their owners and authorized users.
+Only authorized roles can verify reports or publish official advisories.
+Users cannot impersonate another account.
+Users cannot edit another person's location, emergency contacts, or SOS records.
+Authentication sessions are validated on the server.
+APIs enforce authorization even if a user manually modifies a request.
+Create clear role-based permissions for residents, moderators, and administrators or authorized LGU/DRRMO personnel, using the existing roles if they already exist.
+Public community access must not mean unrestricted access to private personal data.
+9. REAL-TIME NOTIFICATIONS
+Implement a unified notification system for relevant community events.
+Examples include:
+A registered emergency contact receives an SOS alert.
+A report is submitted or verified.
+A hazard near a user receives an important update.
+An official emergency announcement is published.
+A household member completes a safety check-in.
+A recipient acknowledges an SOS alert.
+A report changes to Resolved.
+A community volunteer receives an update about an accepted activity.
+Use in-app notifications and the external delivery providers supported by the project.
+Provide notification preferences, unread counts, timestamps, and read/unread states.
+Handle connection interruptions, retries, duplicate events, and expired subscriptions safely. If real-time connectivity is unavailable, fall back to appropriate polling or refresh behavior.
+10. DESIGN AND USER EXPERIENCE
+Maintain the existing AEGIS design visible in my screenshots:
+Dark navy sidebar.
+Blue primary buttons.
+Red emergency SOS button.
+Green navigation and safe-location actions.
+Light backgrounds and rounded cards.
+Existing typography, icon style, spacing, and dashboard structure.
+Floating chat or assistant control.
+Existing navigation and route structure.
+Improve consistency where needed, but do not remove existing functionality or redesign the entire application unnecessarily.
+Ensure that the application works on desktop, tablets, and mobile devices.
+Provide clear loading indicators, empty states, validation errors, permission messages, success confirmations, and retry actions.
+Do not let map markers, notifications, or live updates freeze the interface.
+11. SECURITY, PRIVACY, AND EMERGENCY RELIABILITY
+Because AEGIS is an earthquake safety application, prioritize reliability and responsible handling of emergency data.
+Validate all inputs on the server.
+Protect against unauthorized access and injection attacks.
+Apply rate limits to SOS activation, login attempts, and community submissions.
+Use secure file upload validation for hazard photos and attachments.
+Keep API keys and notification-provider credentials on the server.
+Protect sensitive personal information in storage and transit.
+Prevent arbitrary users from tracking another user's precise location without permission.
+Provide clear location-sharing controls and appropriate data-retention rules.
+Record administrative verification actions.
+Handle failed database writes and external notification requests gracefully.
+Avoid exposing private information in application logs.
+Clearly distinguish verified official information from unverified community submissions.
+Do not claim that AEGIS replaces official emergency services.
+If the application cannot send SMS because no SMS provider is configured, explain the missing configuration and implement a clean provider integration point. Do not simulate successful SMS delivery.
+12. TESTING AND ACCEPTANCE CRITERIA
+Test the complete application using at least two separate registered user accounts and, where possible, two independent browser sessions or devices.
+The implementation is complete only when the following tests pass:
+Test 1: Shared Community Map
+Account A logs in and enables location sharing.
+Account B logs in separately and opens the Community Map.
+Account B can see Account A's permitted location marker.
+Account B enables sharing, and Account A can see Account B's marker.
+Location changes are synchronized without a full-page reload.
+Disabling sharing removes or appropriately hides the marker.
+Test 2: Hazard Reporting
+Account A submits a hazard report.
+Account B sees the new report in the community feed and on the map when location data is available.
+Account B can open the report and submit an allowed interaction.
+An authorized moderator can verify the report.
+The updated verification status appears to other authorized viewers.
+Test 3: Community Announcements
+An authorized account publishes an announcement.
+Other users receive the appropriate notification and can view the announcement.
+Unauthorized users cannot mark their posts as official advisories.
+Test 4: Emergency Contacts
+Account A adds and saves a real test contact.
+The contact remains available after logout and login.
+Editing or removing the contact updates the actual stored record.
+Account B cannot access Account A's private contact list without authorization.
+Test 5: Emergency SOS
+Account A activates SOS.
+The system creates an incident and processes notifications for Account A's registered contacts.
+The alert includes the appropriate sender information, timestamp, and available location.
+The configured delivery provider is actually invoked.
+Account B sees the incident only if permitted by the emergency visibility policy.
+The interface accurately reflects delivery failures and recipient acknowledgments.
+Test 6: Persistence and Multi-User Isolation
+Shared reports and announcements remain available after refreshing the page.
+User-specific records remain associated with their owners.
+Concurrent updates do not overwrite unrelated records.
+A user cannot manipulate API requests to access another user's private data.
+Test 7: Existing Features
+Login, registration, navigation, risk assessment, evacuation locations, drills, recovery tracking, and other existing modules continue to work.
+No existing route or component is broken by the integration.
+The interface remains responsive across supported screen sizes.
+13. IMPLEMENTATION WORKFLOW
+Follow this order:
+Inspect the existing repository, application structure, authentication, database, and current Community Map implementation.
+Identify why users, locations, contacts, reports, or notifications are currently isolated, hardcoded, or not synchronized.
+Explain briefly which existing components and services will be reused.
+Implement the required database migrations and server-side APIs.
+Implement shared data access and real-time synchronization.
+Connect the Community Map to actual opted-in user locations.
+Integrate hazard reports, announcements, and community interactions.
+Connect Emergency SOS to real registered emergency contacts and configured notification providers.
+Integrate the shared information into the existing dashboards.
+Add privacy controls, authorization checks, and error handling.
+Test the application using multiple independent accounts.
+Fix discovered issues and verify that all existing modules still function.
+Provide a concise summary of changes, configuration requirements, database migrations, environment variables, and tests performed.
+Do not stop after presenting a plan or producing frontend components. Implement the actual working changes in the existing project.
+If credentials or external provider configuration are missing, implement the integration as far as possible, identify the exact missing configuration, and never claim that an unconfigured external service is working.
+FINAL OBJECTIVE
+Transform AEGIS into one connected earthquake preparedness and emergency response community where:
+Users can see other users who have opted into community location sharing on the same Community Map.
+Every authorized user sees synchronized community hazards, announcements, and relevant emergency activity.
+Residents can report hazards and interact with community information.
+The SOS button alerts the actual emergency contacts registered by the user through configured delivery channels.
+Personal household records, private contacts, and sensitive location information remain protected.
+All existing AEGIS modules continue working together.
+The entire system uses real database records and real integrations rather than hardcoded or simulated data.
+Priority order: Real SOS functionality and contact delivery, secure shared location visibility, community hazard reporting, verified announcements, and reliable real-time synchronization. Preserve the existing interface and implement working end-to-end functionality first.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-14T22:11:18+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\flean\Documents\aegis-full\index.html (LANGUAGE_HTML)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\flean\Documents\aegis-full\vercel.json (LANGUAGE_JSON)
+- c:\Users\flean\Documents\aegis-full\index.html (LANGUAGE_HTML)
+Browser State:
+  Page EF1320E915C63F1E5F1A35A726F7434E () - http://localhost:5173/landing [ACTIVE]
+    Viewport: 0x0, Page Height: 0
+</ADDITIONAL_METADATA>

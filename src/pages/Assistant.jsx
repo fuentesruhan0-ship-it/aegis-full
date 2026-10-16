@@ -1,11 +1,14 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/PageHeader";
-import { Bot, Send, Loader2, ShieldCheck, User, Wifi, WifiOff } from "lucide-react";
+import { Bot, Send, Loader2, ShieldCheck, User, Wifi, WifiOff, AlertCircle, Sparkles } from "lucide-react";
 import { findBestMatch } from "@/lib/offlineKnowledge";
+import { generateAIAssistantReply } from "@/lib/aegisAI";
+import { queryGeminiAssistant, isGeminiConfigured } from "@/lib/geminiClient";
 
 const SUGGESTIONS = [
   "What should I do during an earthquake?",
@@ -18,37 +21,55 @@ const SUGGESTIONS = [
 function MessageBubble({ role, content, source }) {
   const isUser = role === "user";
   const isCached = source === "cached" || source === "fallback";
+  const isError = source === "error";
   
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-          isUser ? "bg-blue-600 text-white" : "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+          isUser
+            ? "bg-blue-600 text-white"
+            : isError
+            ? "bg-rose-600 text-white shadow-sm"
+            : "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
         }`}
       >
-        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+        {isUser ? <User className="h-4 w-4" /> : isError ? <AlertCircle className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
-      <div className="flex-1 max-w-[80%]">
+      <div className="flex-1 max-w-[85%]">
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
               ? "rounded-tr-sm bg-blue-600 text-white"
-              : "rounded-tl-sm bg-white/55 text-slate-700 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40"
+              : isError
+              ? "rounded-tl-sm bg-rose-50/90 text-rose-900 border border-rose-200/80 shadow-sm"
+              : "rounded-tl-sm bg-white/70 text-slate-700 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/40 shadow-sm"
           }`}
         >
-          <p className="whitespace-pre-wrap">{content}</p>
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{content}</p>
+          ) : (
+            <div className="prose prose-sm max-w-none text-inherit leading-relaxed [&>p]:mb-2.5 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>ul>li]:mb-1 [&>ol>li]:mb-1 [&>h3]:font-bold [&>h3]:text-sm [&>h3]:mt-3 [&>h3]:mb-1 [&_strong]:font-semibold">
+              <ReactMarkdown>{content}</ReactMarkdown>
+            </div>
+          )}
         </div>
         {!isUser && source && (
           <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 px-1">
-            {isCached ? (
+            {isError ? (
               <>
-                <WifiOff className="h-3 w-3" />
-                <span>Offline - Cached response</span>
+                <AlertCircle className="h-3 w-3 text-rose-500" />
+                <span className="text-rose-600 font-medium">AI Service Notice</span>
+              </>
+            ) : isCached ? (
+              <>
+                <WifiOff className="h-3 w-3 text-amber-500" />
+                <span className="text-amber-600">Offline Knowledge Base</span>
               </>
             ) : (
               <>
-                <Wifi className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-600">Live AI response</span>
+                <Sparkles className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600 font-medium">Live Gemini AI response</span>
               </>
             )}
           </div>
@@ -103,52 +124,99 @@ export default function Assistant() {
     
     try {
       if (isOnline) {
-        // Try online AI first
-        try {
-          const res = await Promise.race([
-            base44.functions.invoke("aegisAssistant", {
+        // 1. Prioritize Google Gemini API if configured
+        if (isGeminiConfigured()) {
+          try {
+            const { reply } = await queryGeminiAssistant(
               message,
-              history: messages.map((m) => ({ role: m.role, content: m.content })),
-            }),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("timeout")), 5000)
-            )
-          ]);
-          
-          const reply = res?.data?.reply || res?.data?.error;
-          if (reply) {
-            setMessages([...newMessages, { 
-              role: "assistant", 
-              content: reply,
-              source: "online"
-            }]);
-            return;
+              messages.map((m) => ({ role: m.role, content: m.content }))
+            );
+            if (reply) {
+              setMessages([...newMessages, { 
+                role: "assistant", 
+                content: reply,
+                source: "online"
+              }]);
+              return;
+            }
+          } catch (geminiError) {
+            console.error("Gemini API error:", geminiError);
+            const isAuthOrQuota = geminiError.message?.includes("403") || geminiError.message?.includes("429");
+            
+            if (isAuthOrQuota) {
+              const notice = geminiError.message?.includes("403")
+                ? "**Project Access Denied (HTTP 403)**: The Google Cloud project linked to this Gemini API key has been denied access or restricted. Please generate a new key or check permissions at [Google AI Studio](https://aistudio.google.com/app/apikey)."
+                : "**Quota Limit Exceeded (HTTP 429)**: The Gemini free-tier quota for this API key has been exhausted (limit reached). Please verify your quota at [Google AI Studio](https://aistudio.google.com/app/apikey).";
+
+              // Show the service notice message
+              const { answer } = findBestMatch(message);
+              setMessages([
+                ...newMessages,
+                {
+                  role: "assistant",
+                  content: `⚠️ ${notice}\n\n---\n\n*Emergency Knowledge Base response for your query:* \n\n${answer}`,
+                  source: "error"
+                }
+              ]);
+              return;
+            }
+          }
+        }
+
+        // 2. Try Base44 backend function
+        try {
+          if (base44?.functions?.invoke) {
+            const res = await Promise.race([
+              base44.functions.invoke("aegisAssistant", {
+                message,
+                history: messages.map((m) => ({ role: m.role, content: m.content })),
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("timeout")), 8000)
+              )
+            ]);
+            
+            const reply = res?.data?.reply;
+            if (reply && !res?.data?.error) {
+              setMessages([...newMessages, { 
+                role: "assistant", 
+                content: reply,
+                source: "online"
+              }]);
+              return;
+            }
           }
         } catch (onlineError) {
-          console.log("Online AI failed, using cached response:", onlineError.message);
-          // Fall through to offline mode
+          console.log("Base44 backend function unavailable:", onlineError.message);
         }
+
+        // 3. Fallback to offline knowledge base when online engines fail
+        const { answer } = findBestMatch(message);
+        setMessages([...newMessages, { 
+          role: "assistant", 
+          content: answer,
+          source: "cached" // Correctly labeled as cached
+        }]);
+        return;
       }
       
-      // Use offline cached response
-      const { answer, source, confidence } = findBestMatch(message);
+      // Offline mode
+      const { answer, source } = findBestMatch(message);
       setMessages([...newMessages, { 
         role: "assistant", 
         content: answer,
-        source: source
+        source: source || "cached"
       }]);
       
     } catch (e) {
       console.error("Assistant error:", e);
-      
-      // Ultimate fallback
       const { answer } = findBestMatch(message);
       setMessages([
         ...newMessages,
         { 
           role: "assistant", 
           content: answer,
-          source: "fallback"
+          source: "cached"
         },
       ]);
     } finally {
@@ -168,19 +236,26 @@ export default function Assistant() {
       {/* Online/Offline Status Badge */}
       <div className="mb-4 flex items-center justify-center">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
-          isOnline 
-            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" 
-            : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+          !isOnline
+            ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+            : isGeminiConfigured()
+            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+            : "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
         }`}>
-          {isOnline ? (
-            <>
-              <Wifi className="h-4 w-4" />
-              <span>Online Mode - Live AI</span>
-            </>
-          ) : (
+          {!isOnline ? (
             <>
               <WifiOff className="h-4 w-4" />
               <span>Offline Mode - Cached Knowledge</span>
+            </>
+          ) : isGeminiConfigured() ? (
+            <>
+              <Sparkles className="h-4 w-4 text-emerald-600" />
+              <span>Online Mode - Live Gemini AI</span>
+            </>
+          ) : (
+            <>
+              <Wifi className="h-4 w-4 text-blue-600" />
+              <span>Online Mode - Emergency Knowledge</span>
             </>
           )}
         </div>

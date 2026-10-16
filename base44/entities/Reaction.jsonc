@@ -1,0 +1,36 @@
+{
+  "properties": {
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "hazard_report",
+        "announcement",
+        "infrastructure_status",
+        "volunteer_post",
+        "comment"
+      ],
+      "description": "Which module this reaction belongs to"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of the record being reacted to"
+    },
+    "reaction_type": {
+      "type": "string",
+      "enum": [
+        "confirm",
+        "helpful",
+        "urgent",
+        "like"
+      ],
+      "description": "Type of reaction — 'confirm' = 'I see this too' for hazard reports"
+    }
+  },
+  "required": [
+    "target_type",
+    "target_id",
+    "reaction_type"
+  ],
+  "name": "Reaction",
+  "type": "object"
+}
