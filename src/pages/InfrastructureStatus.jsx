@@ -10,24 +10,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+
 import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
   Clock,
   Search,
-  Building2,
   Zap,
-  Droplets,
-  Wifi,
-  ShieldAlert,
   Plus,
   RefreshCw,
   Navigation,
@@ -38,7 +29,6 @@ import {
   Trash2,
   Edit2,
   ShieldCheck,
-  AlertOctagon,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import ReactionButtons from "@/components/interactions/ReactionButtons";

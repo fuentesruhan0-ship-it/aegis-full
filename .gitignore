@@ -40,3 +40,7 @@ base44/.app.jsonc
 
 *.backup
 .freebuff/
+
+.aegis_sync_store.json
+scratch/
+

@@ -39,19 +39,14 @@ import {
   Loader2,
   CheckCircle2,
   ShieldCheck,
-  ShieldAlert,
   Flag,
   MessageSquare,
   Search,
-  Filter,
   Camera,
   Trash2,
   Edit2,
   XCircle,
-  ExternalLink,
-  User,
   Shield,
-  Image as ImageIcon,
 } from "lucide-react";
 
 const HAZARD_TYPES = {

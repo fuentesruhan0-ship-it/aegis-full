@@ -73,7 +73,28 @@ export function generateAIAssistantReply(message, history = []) {
     );
   }
 
-  // 5. Match against Knowledge Base (multi-keyword scoring)
+  // 5. Earthquake prediction / rumor queries
+  if (
+    normalized.includes('predict') ||
+    normalized.includes('prediction') ||
+    normalized.includes('will there be an earthquake') ||
+    normalized.includes('when is the next earthquake') ||
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b.*\bearthquake\b/i.test(normalized) ||
+    /\bearthquake\b.*\b(tomorrow|next week|next month|soon|2025|2026|2027)\b/i.test(normalized)
+  ) {
+    return (
+      "⚠️ **Scientific Fact on Earthquake Predictions:**\n\n" +
+      "**Earthquakes cannot be predicted ahead of time.** Neither PHIVOLCS, USGS, nor any scientific agency in the world has the technology or method to predict the exact date, time, or magnitude of an earthquake.\n\n" +
+      "• **Disregard viral rumors or social media panic posts:** Always rely solely on verified bulletins from official agencies like [PHIVOLCS-DOST](https://www.phivolcs.dost.gov.ph).\n" +
+      "• **Focus on Preparedness:** Because earthquakes strike without warning, continuous readiness is the best protection:\n" +
+      "  1. Practice **Drop, Cover, and Hold On** with your household or workplace.\n" +
+      "  2. Keep your **72-hour Go-Bag** packed and easily accessible near your exit.\n" +
+      "  3. Fasten heavy furniture and appliances securely to walls.\n" +
+      "  4. Familiarize yourself with designated evacuation areas in Tupi, South Cotabato."
+    );
+  }
+
+  // 6. Match against Knowledge Base (multi-keyword scoring)
   let bestMatch = null;
   let highestScore = 0;
 

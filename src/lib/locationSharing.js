@@ -40,34 +40,46 @@ export const SHARING_STATUS = {
  * @returns {boolean}
  */
 export function isLocationVisibleTo(locationRecord, requestingUser, householdMemberIds = [], hasActiveSos = false) {
-  if (!locationRecord || !requestingUser) return false;
+  if (!locationRecord) return false;
+
+  // Active emergency SOS beacon owners are ALWAYS visible to everyone
+  if (hasActiveSos) return true;
+
+  const recordUserId = String(locationRecord.created_by_id || locationRecord.user_id || '');
+  const currentUserId = String(requestingUser?.id || '');
 
   // User's own location is always visible
-  if (String(locationRecord.created_by_id) === String(requestingUser.id)) return true;
+  if (currentUserId && recordUserId === currentUserId) return true;
 
   const visibility = locationRecord.sharing_visibility || SHARING_VISIBILITY.COMMUNITY;
   const status = locationRecord.sharing_status || SHARING_STATUS.ACTIVE;
 
-  // If the user has stopped sharing, hide their marker
+  // If the user explicitly stopped sharing, hide their marker (unless active SOS)
   if (status === SHARING_STATUS.STOPPED) return false;
 
   switch (visibility) {
     case SHARING_VISIBILITY.COMMUNITY:
-      return true;
+      return true; // Open to all community members
     case SHARING_VISIBILITY.TRUSTED_CONTACTS:
-      return householdMemberIds.includes(String(locationRecord.created_by_id));
+      return householdMemberIds.map(String).includes(recordUserId);
     case SHARING_VISIBILITY.EMERGENCY_ONLY:
-      return hasActiveSos || householdMemberIds.includes(String(locationRecord.created_by_id));
+      return hasActiveSos || householdMemberIds.map(String).includes(recordUserId);
     default:
       return true;
   }
 }
 
 /**
- * Check if a location record is stale (older than 15 minutes).
+ * Check if a location record is stale.
+ * Active community sharing markers remain valid for 24 hours so users don't vanish during tests.
  */
 export function isLocationStale(locationRecord) {
   if (!locationRecord) return true;
+  if (locationRecord.sharing_status === SHARING_STATUS.ACTIVE) {
+    const updated = locationRecord.last_active_at || locationRecord.updated_date || locationRecord.created_date;
+    if (!updated) return false;
+    return (Date.now() - new Date(updated).getTime()) > (24 * 60 * 60 * 1000); // 24 hours
+  }
   const updated = locationRecord.updated_date || locationRecord.created_date;
   if (!updated) return true;
   return (Date.now() - new Date(updated).getTime()) > STALE_THRESHOLD_MS;
@@ -77,17 +89,24 @@ export function isLocationStale(locationRecord) {
  * Filter a list of location records to only those visible and non-stale.
  */
 export function filterVisibleLocations(locations, requestingUser, householdMemberIds = [], activeSosUserIds = []) {
-  if (!locations || !requestingUser) return [];
+  if (!locations || !Array.isArray(locations)) return [];
+
+  const currentUserId = String(requestingUser?.id || '');
+  const sosIds = (activeSosUserIds || []).map(String);
 
   return locations.filter((loc) => {
-    // Always show current user's location
-    if (String(loc.created_by_id) === String(requestingUser.id)) return true;
+    const locUserId = String(loc.created_by_id || loc.user_id || '');
 
-    // Remove stale markers
-    if (isLocationStale(loc)) return false;
+    // Always show current user's location
+    if (currentUserId && locUserId === currentUserId) return true;
+
+    // Check if user has active SOS
+    const hasActiveSos = sosIds.includes(locUserId);
+
+    // Active SOS is never filtered by staleness
+    if (!hasActiveSos && isLocationStale(loc)) return false;
 
     // Check visibility
-    const hasActiveSos = activeSosUserIds.includes(String(loc.created_by_id));
     return isLocationVisibleTo(loc, requestingUser, householdMemberIds, hasActiveSos);
   });
 }
@@ -163,14 +182,16 @@ export async function startOrUpdateLocationSharing(base44, {
 }) {
   if (!user || !position) throw new Error('User and position are required to share location');
 
+  const photo = avatarUrl || user.avatar_url || user.imageUrl || null;
   const payload = {
     created_by_id: user.id,
-    full_name: user.full_name || user.email || 'Community Member',
+    user_id: user.id,
+    full_name: user.full_name || user.name || user.email?.split('@')[0] || 'Community Member',
     location_lat: position.lat,
     location_lng: position.lng,
     location_label: locationLabel || `${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}`,
-    emoji: avatarUrl ? null : emoji,
-    avatar_url: avatarUrl || user.avatar_url || null,
+    emoji: photo ? null : (emoji || '🧍'),
+    avatar_url: photo,
     sharing_visibility: visibility,
     sharing_status: SHARING_STATUS.ACTIVE,
     last_active_at: new Date().toISOString(),

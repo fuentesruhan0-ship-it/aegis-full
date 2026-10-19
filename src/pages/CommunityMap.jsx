@@ -13,9 +13,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import {
-  MapPin, Share2, Loader2, Users, Crosshair, Eye, EyeOff, Smile, Camera, Trash2, Layers,
-  LocateFixed, Activity, Siren, Tent, Shield, AlertTriangle, Radio, Navigation, Pause,
-  Play, CheckCircle2, SlidersHorizontal, Lock, Phone, ExternalLink
+  MapPin, Share2, Loader2, Users, Eye, EyeOff, Camera, Trash2, Layers,
+  LocateFixed, AlertTriangle, Navigation, Pause, CheckCircle2, SlidersHorizontal, Lock
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
@@ -26,11 +25,9 @@ import {
   SHARING_VISIBILITY,
   SHARING_STATUS,
   filterVisibleLocations,
-  isLocationStale,
   getVisibilityLabel,
   getStatusLabel,
   getSharingPreferences,
-  saveSharingPreferences,
   startOrUpdateLocationSharing,
   pauseLocationSharing,
   stopLocationSharing,
@@ -109,38 +106,73 @@ function reverseGeocode(lat, lng) {
     .catch(() => "Shared location");
 }
 
-function createEmojiIcon(emoji, isMe, isPaused) {
+function getDeterministicOffset(idStr) {
+  if (!idStr) return { latOff: 0, lngOff: 0 };
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = ((hash << 5) - hash) + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const latOff = ((Math.abs(hash) % 24) - 12) * 0.0006;
+  const lngOff = ((Math.abs(hash * 31) % 24) - 12) * 0.0006;
+  return { latOff, lngOff };
+}
+
+function createEmojiIcon(emoji, isMe, isPaused, hasActiveSos = false) {
+  const glow = hasActiveSos
+    ? "filter: drop-shadow(0 0 14px #e11d48) drop-shadow(0 0 6px #e11d48);"
+    : (isMe ? "filter: drop-shadow(0 0 8px #2563eb);" : "");
   return L.divIcon({
     html: `
-      <div style="position:relative; font-size: 30px; line-height: 1; text-align: center; ${isMe ? "filter: drop-shadow(0 0 8px #2563eb);" : ""}">
+      <div style="position:relative; font-size: 32px; line-height: 1; text-align: center; ${glow}">
         ${emoji}
+        ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; animation:bounce 1s infinite;">🚨</span>' : ''}
         ${isPaused ? '<span style="position:absolute; bottom:-4px; right:-4px; width:10px; height:10px; border-radius:50%; background:#eab308; border:1.5px solid white;"></span>' : '<span style="position:absolute; bottom:-4px; right:-4px; width:10px; height:10px; border-radius:50%; background:#10b981; border:1.5px solid white;"></span>'}
       </div>
     `,
     className: "aegis-marker",
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
   });
 }
 
-function createPhotoIcon(url, isMe, isPaused) {
+function createPhotoIcon(url, isMe, isPaused, hasActiveSos = false) {
+  const borderColor = hasActiveSos ? "#e11d48" : (isMe ? "#2563eb" : "white");
+  const glow = hasActiveSos
+    ? "box-shadow: 0 0 18px #e11d48, 0 0 8px #e11d48;"
+    : (isMe ? "box-shadow: 0 0 12px rgba(37,99,235,0.85);" : "box-shadow: 0 2px 8px rgba(0,0,0,0.35);");
   return L.divIcon({
     html: `
-      <div style="position:relative; width:38px; height:38px; border-radius:50%; overflow:visible;">
-        <img src="${url}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:3px solid ${isMe ? "#2563eb" : "white"}; box-shadow:0 2px 8px rgba(0,0,0,0.35); display:block;"/>
+      <div style="position:relative; width:40px; height:40px; border-radius:50%; overflow:visible;">
+        <img src="${url}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/initials/svg?seed=AEGIS';" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:3px solid ${borderColor}; ${glow} display:block;"/>
+        ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; line-height:1; filter: drop-shadow(0 0 4px #e11d48);">🚨</span>' : ''}
         ${isPaused ? '<span style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:#eab308; border:2px solid white;"></span>' : '<span style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:#10b981; border:2px solid white;"></span>'}
       </div>
     `,
     className: "aegis-photo-marker",
-    iconSize: [38, 38],
-    iconAnchor: [19, 19],
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
   });
 }
 
-function getMarkerIcon(loc, isMe) {
+function getMarkerIcon(loc, isMe, hasActiveSos = false) {
   const isPaused = loc.sharing_status === SHARING_STATUS.PAUSED;
-  if (loc.avatar_url) return createPhotoIcon(loc.avatar_url, isMe, isPaused);
-  return createEmojiIcon(loc.emoji || "🧍", isMe, isPaused);
+  if (loc.avatar_url) return createPhotoIcon(loc.avatar_url, isMe, isPaused, hasActiveSos);
+  return createEmojiIcon(loc.emoji || "🧍", isMe, isPaused, hasActiveSos);
+}
+
+function createLivePositionIcon() {
+  return L.divIcon({
+    html: `
+      <div style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+        <span style="position:absolute; inset:0; border-radius:50%; background:rgba(37,99,235,0.35); animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;"></span>
+        <span style="position:absolute; width:18px; height:18px; border-radius:50%; background:#2563eb; border:3px solid white; box-shadow:0 0 12px rgba(37,99,235,0.85); display:flex; align-items:center; justify-content:center;"></span>
+      </div>
+    `,
+    className: "aegis-realtime-marker",
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
 }
 
 function createSosBeaconIcon() {
@@ -243,7 +275,7 @@ export default function CommunityMap() {
   const [householdMemberIds, setHouseholdMemberIds] = useState([]);
   const [myLocation, setMyLocation] = useState(null);
   const [myRealTimePosition, setMyRealTimePosition] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [emoji, setEmoji] = useState("🧍");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
@@ -262,13 +294,146 @@ export default function CommunityMap() {
   const [showSos, setShowSos] = useState(true);
   const [showEvac, setShowEvac] = useState(false);
   const [, setNowTick] = useState(0);
+  // Location permission state: 'checking' | 'granted' | 'denied' | 'prompt' | 'unavailable' | 'insecure_context' | 'dismissed'
+  const [locationPermission, setLocationPermission] = useState('checking');
 
   const fileInputRef = useRef(null);
   const mapRef = useRef(null);
 
+  // Check and request geolocation permission on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkLocationPermission() {
+      // Check if connection is an insecure context on non-localhost (e.g. mobile over http://192.168.x.x)
+      const isLocalhost = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.localhost')
+      );
+      const isInsecure = typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost;
+
+      if (isInsecure) {
+        if (!cancelled) setLocationPermission('insecure_context');
+        return;
+      }
+
+      // Check if geolocation API exists
+      if (!navigator.geolocation) {
+        if (!cancelled) setLocationPermission('unavailable');
+        return;
+      }
+
+      // Use Permissions API if available (supported on modern browsers)
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
+          if (!cancelled) {
+            if (result.state === 'granted') {
+              setLocationPermission('granted');
+              // Auto-get position if already granted
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  if (!cancelled) {
+                    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    setMyRealTimePosition(coords);
+                    setFlyTrigger((t) => t + 1);
+                  }
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+              );
+            } else if (result.state === 'denied') {
+              setLocationPermission('denied');
+            } else {
+              // 'prompt' — user hasn't decided yet
+              setLocationPermission('prompt');
+            }
+          }
+          // Listen for permission changes
+          result.addEventListener('change', () => {
+            if (!cancelled) {
+              setLocationPermission(result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'prompt');
+            }
+          });
+        } catch {
+          // Permissions API not supported for geolocation — show prompt banner
+          if (!cancelled) setLocationPermission('prompt');
+        }
+      } else {
+        // No Permissions API — show the prompt banner
+        if (!cancelled) setLocationPermission('prompt');
+      }
+    }
+
+    checkLocationPermission();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Handler for the "Allow Location" button
+  const handleRequestLocation = useCallback(() => {
+    const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.endsWith('.localhost')
+    );
+    const isInsecure = typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost;
+
+    if (isInsecure) {
+      setLocationPermission('insecure_context');
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationPermission('unavailable');
+      return;
+    }
+
+    setLocationPermission('checking');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setLocationPermission('granted');
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setMyRealTimePosition(coords);
+        setFlyTrigger((t) => t + 1);
+
+        // Synchronize real GPS position with community map
+        if (user?.id) {
+          try {
+            const label = await reverseGeocode(coords.lat, coords.lng);
+            const photo = user.avatar_url || user.imageUrl || avatarUrl || null;
+            const updated = await startOrUpdateLocationSharing(base44, {
+              user,
+              existingLocationId: myLocation?.id,
+              position: coords,
+              locationLabel: label,
+              visibility: sharingVisibility || SHARING_VISIBILITY.COMMUNITY,
+              emoji: photo ? null : emoji,
+              avatarUrl: photo,
+            });
+            setMyLocation(updated);
+            loadLocations();
+          } catch {}
+        }
+      },
+      (err) => {
+        if (err.code === 1) {
+          setLocationPermission('denied');
+        } else {
+          setLocationPermission('unavailable');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }, [user, myLocation?.id, sharingVisibility, emoji, avatarUrl, loadLocations]);
+
+  const handleDismissLocationBanner = useCallback(() => {
+    setLocationPermission('dismissed');
+  }, []);
+
   // Keep "time ago" updated
   useEffect(() => {
-    const t = setInterval(() => setNowTick((n) => n + 1), 30000);
+    const t = setInterval(() => setNowTick((n) => n + 1), 15000);
     return () => clearInterval(t);
   }, []);
 
@@ -305,7 +470,7 @@ export default function CommunityMap() {
   const loadLocations = useCallback(async () => {
     try {
       const list = await base44.entities.UserLocation.list("-updated_date", 500);
-      const mine = (list || []).find((l) => String(l.created_by_id) === String(user?.id));
+      const mine = (list || []).find((l) => String(l.created_by_id || l.user_id) === String(user?.id));
       setMyLocation(mine);
       if (mine) {
         if (mine.emoji) setEmoji(mine.emoji);
@@ -336,6 +501,67 @@ export default function CommunityMap() {
     }
   }, []);
 
+  // Auto-register logged-in user on community map so everyone sees each other immediately
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let active = true;
+
+    async function ensureUserOnMap() {
+      try {
+        const list = await base44.entities.UserLocation.list("-updated_date", 500);
+        const existing = (list || []).find(
+          (l) => String(l.created_by_id || l.user_id) === String(user.id)
+        );
+
+        const { latOff, lngOff } = getDeterministicOffset(String(user.id));
+        const defaultLat = 6.2356 + latOff;
+        const defaultLng = 125.0286 + lngOff;
+
+        const pos = myRealTimePosition || (existing?.location_lat ? { lat: existing.location_lat, lng: existing.location_lng } : { lat: defaultLat, lng: defaultLng });
+
+        const photo = user.avatar_url || user.imageUrl || existing?.avatar_url || null;
+        const userEmoji = photo ? null : (existing?.emoji || emoji || "🧍");
+
+        if (!existing || !existing.location_lat || existing.sharing_status !== SHARING_STATUS.ACTIVE) {
+          const created = await startOrUpdateLocationSharing(base44, {
+            user,
+            existingLocationId: existing?.id,
+            position: pos,
+            locationLabel: existing?.location_label || "Poblacion, Tupi Community",
+            visibility: SHARING_VISIBILITY.COMMUNITY,
+            emoji: userEmoji,
+            avatarUrl: photo,
+          });
+          if (active) {
+            setMyLocation(created);
+            setSharingStatus(SHARING_STATUS.ACTIVE);
+            loadLocations();
+          }
+        }
+      } catch (err) {
+        console.warn("Auto-share location notice:", err.message);
+      }
+    }
+
+    ensureUserOnMap();
+
+    // Heartbeat every 25 seconds to keep active status fresh across multiple tabs/browsers
+    const heartbeat = setInterval(() => {
+      if (myLocation?.id) {
+        base44.entities.UserLocation.update(myLocation.id, {
+          last_active_at: new Date().toISOString(),
+          sharing_status: SHARING_STATUS.ACTIVE,
+        }).catch(() => {});
+      }
+    }, 25000);
+
+    return () => {
+      active = false;
+      clearInterval(heartbeat);
+    };
+  }, [user?.id, myRealTimePosition, loadLocations]);
+
   // Initialize and set up real-time polling / subscriptions
   useEffect(() => {
     loadHousehold();
@@ -355,12 +581,12 @@ export default function CommunityMap() {
       loadLocations();
     });
 
-    // 15-second polling fallback for guaranteed synchronization across multi-user sessions
+    // 3-second polling fallback for guaranteed instant synchronization across multi-user sessions
     const interval = setInterval(() => {
       loadLocations();
       loadSosAlerts();
       loadHazardReports();
-    }, 15000);
+    }, 3000);
 
     return () => {
       unsubLoc();
@@ -479,10 +705,12 @@ export default function CommunityMap() {
   };
 
   /** @type {[number, number]} */
-  const mapCenter = myLocation
+  const mapCenter = myRealTimePosition
+    ? [myRealTimePosition.lat, myRealTimePosition.lng]
+    : myLocation
     ? [myLocation.location_lat, myLocation.location_lng]
     : TUPI_CENTER;
-  const mapZoom = myLocation ? 14 : 13;
+  const mapZoom = myLocation || myRealTimePosition ? 14 : 13;
 
   return (
     <div className="relative h-[calc(100vh-3.5rem)] lg:h-screen">
@@ -510,30 +738,84 @@ export default function CommunityMap() {
           `}</style>
         )}
 
+        {/* Current User Live GPS Location (Private indicator before sharing) */}
+        {myRealTimePosition && !myLocation && (
+          <Marker
+            position={[myRealTimePosition.lat, myRealTimePosition.lng]}
+            icon={createLivePositionIcon()}
+          >
+            <Popup>
+              <div style={{ minWidth: 200, padding: "4px 2px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 14 }}>
+                    📍
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>Your Live Position</div>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>GPS detected • Private to you</div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 11, color: "#475569", margin: "6px 0 10px", lineHeight: 1.4 }}>
+                  Your device GPS location is active. Share it to appear on the community map for emergency responders and neighbors.
+                </p>
+                <button
+                  onClick={() => setSharingSettingsOpen(true)}
+                  style={{ width: "100%", padding: "6px 12px", background: "#2563eb", color: "white", border: "none", borderRadius: 8, fontWeight: 600, fontSize: 11, cursor: "pointer" }}
+                >
+                  Share My Location
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         {/* 1. Opted-In Community People Markers */}
         {showPeople && locations.map((loc) => {
-          const isMe = String(loc.created_by_id) === String(user?.id);
+          const locUserId = String(loc.created_by_id || loc.user_id || "");
+          const isMe = locUserId === String(user?.id);
+          const hasActiveSos = activeSosAlerts.some(
+            (s) => String(s.created_by_id || s.sender_id) === locUserId
+          );
           const markerLat = isMe && myRealTimePosition ? myRealTimePosition.lat : loc.location_lat;
           const markerLng = isMe && myRealTimePosition ? myRealTimePosition.lng : loc.location_lng;
           const isPaused = loc.sharing_status === SHARING_STATUS.PAUSED;
 
+          if (!markerLat || !markerLng || isNaN(markerLat) || isNaN(markerLng)) return null;
+
           return (
             <Marker
-              key={loc.id}
+              key={loc.id || locUserId}
               position={[markerLat, markerLng]}
-              icon={getMarkerIcon(loc, isMe)}
+              icon={getMarkerIcon(loc, isMe, hasActiveSos)}
             >
               <Popup>
                 <div style={{ minWidth: 200 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                     {loc.avatar_url ? (
-                      <img src={loc.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }} />
+                      <img
+                        src={loc.avatar_url}
+                        alt=""
+                        onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/7.x/initials/svg?seed=AEGIS'; }}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: hasActiveSos ? "2px solid #e11d48" : "2px solid rgba(255,255,255,0.8)",
+                          boxShadow: hasActiveSos ? "0 0 10px #e11d48" : "0 2px 8px rgba(0,0,0,0.15)"
+                        }}
+                      />
                     ) : (
                       <span style={{ fontSize: 28, lineHeight: 1 }}>{loc.emoji || "🧍"}</span>
                     )}
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
-                        {loc.full_name || "Community member"}{isMe ? " (You)" : ""}
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>{loc.full_name || "Community member"}{isMe ? " (You)" : ""}</span>
+                        {hasActiveSos && (
+                          <span style={{ fontSize: 10, background: "#ffe4e6", color: "#e11d48", padding: "1px 6px", borderRadius: 999, fontWeight: 800 }}>
+                            🚨 SOS
+                          </span>
+                        )}
                       </div>
                       <span style={{
                         display: "inline-block",
@@ -541,10 +823,10 @@ export default function CommunityMap() {
                         fontWeight: 700,
                         padding: "1px 6px",
                         borderRadius: 999,
-                        background: isPaused ? "#fef3c7" : "#d1fae5",
-                        color: isPaused ? "#b45309" : "#065f46"
+                        background: hasActiveSos ? "#ffe4e6" : (isPaused ? "#fef3c7" : "#d1fae5"),
+                        color: hasActiveSos ? "#e11d48" : (isPaused ? "#b45309" : "#065f46")
                       }}>
-                        {isPaused ? "⏸ Paused" : "🟢 Sharing Location"}
+                        {hasActiveSos ? "🚨 SOS ACTIVE" : (isPaused ? "⏸ Paused" : "🟢 Sharing Location")}
                       </span>
                     </div>
                   </div>
@@ -824,12 +1106,13 @@ export default function CommunityMap() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Layer Filter Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden md:flex clay-card border-0 hover:scale-105 transition-transform text-xs font-semibold">
-                  <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" /> Filters
+                <Button variant="outline" size="sm" className="flex clay-card border-0 hover:scale-105 transition-transform text-xs font-semibold px-2.5 sm:px-3">
+                  <SlidersHorizontal className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Filters</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="glass-frosted border-white/50 z-[2000] w-48 p-2 space-y-1">
@@ -876,7 +1159,7 @@ export default function CommunityMap() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Find Me Button */}
+            {/* Find Me Button (Desktop) */}
             {(myLocation || myRealTimePosition) && (
               <Button
                 variant="outline"
@@ -894,20 +1177,129 @@ export default function CommunityMap() {
               disabled={sharing}
               size="sm"
               className={myLocation && sharingStatus === SHARING_STATUS.ACTIVE
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md hover:scale-105 transition-transform text-xs"
-                : "bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md hover:scale-105 transition-transform text-xs"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md hover:scale-105 transition-transform text-xs px-2.5 sm:px-3"
+                : "bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md hover:scale-105 transition-transform text-xs px-2.5 sm:px-3"
               }
             >
               {sharing ? (
-                <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Updating...</>
+                <><Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /><span className="hidden sm:inline">Updating...</span></>
               ) : myLocation ? (
-                <><Share2 className="mr-1.5 h-3.5 w-3.5" />Sharing Controls</>
+                <><Share2 className="h-3.5 w-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Sharing Controls</span><span className="sm:hidden">Sharing</span></>
               ) : (
-                <><Share2 className="mr-1.5 h-3.5 w-3.5" />Share My Location</>
+                <><Share2 className="h-3.5 w-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Share My Location</span><span className="sm:hidden">Share</span></>
               )}
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Geolocation Permission & Status Banner */}
+      {locationPermission !== 'granted' && locationPermission !== 'dismissed' && locationPermission !== 'checking' && (
+        <div className="absolute top-24 inset-x-0 mx-auto max-w-lg z-[1001] px-4 pointer-events-auto">
+          <div className="relative rounded-2xl glass-cinematic p-4 shadow-2xl border border-white/60 backdrop-blur-xl">
+            <div className="flex items-start gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                locationPermission === 'denied' 
+                  ? 'bg-rose-100 text-rose-600' 
+                  : locationPermission === 'insecure_context' 
+                  ? 'bg-amber-100 text-amber-700' 
+                  : 'bg-blue-100 text-blue-600'
+              }`}>
+                {locationPermission === 'denied' ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : locationPermission === 'insecure_context' ? (
+                  <Lock className="h-5 w-5" />
+                ) : (
+                  <Navigation className="h-5 w-5 animate-pulse" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 pr-6">
+                <h3 className="text-sm font-bold text-slate-900">
+                  {locationPermission === 'denied'
+                    ? "Location Permission Blocked"
+                    : locationPermission === 'insecure_context'
+                    ? "Mobile Browser Security Notice"
+                    : "Enable Location Services"}
+                </h3>
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  {locationPermission === 'denied'
+                    ? "Your browser blocked location access for this site. On your mobile phone, tap the lock/tune icon in the address bar to allow Location, then tap Try Again."
+                    : locationPermission === 'insecure_context'
+                    ? "Android Chrome disables GPS permission prompts on plain HTTP connections (http://IP). To use automatic GPS on mobile, access via HTTPS or use the map controls."
+                    : "Allow AEGIS to detect your GPS position so you can view evacuation centers, spot nearby hazards, and share your safety status with neighbors."}
+                </p>
+
+                <div className="flex items-center gap-2 mt-3">
+                  {locationPermission === 'prompt' && (
+                    <Button
+                      size="sm"
+                      onClick={handleRequestLocation}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 rounded-lg shadow-sm"
+                    >
+                      <MapPin className="mr-1 h-3.5 w-3.5" /> Allow Location
+                    </Button>
+                  )}
+                  {locationPermission === 'denied' && (
+                    <Button
+                      size="sm"
+                      onClick={handleRequestLocation}
+                      className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold h-8 rounded-lg shadow-sm"
+                    >
+                      <LocateFixed className="mr-1 h-3.5 w-3.5" /> Try Again
+                    </Button>
+                  )}
+                  {locationPermission === 'insecure_context' && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setFlyTrigger((t) => t + 1);
+                        handleDismissLocationBanner();
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-8 rounded-lg shadow-sm"
+                    >
+                      <MapPin className="mr-1 h-3.5 w-3.5" /> Center on Tupi
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDismissLocationBanner}
+                    className="text-xs text-slate-600 hover:text-slate-900 h-8 rounded-lg"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+
+              <button
+                onClick={handleDismissLocationBanner}
+                className="absolute top-3 right-3 text-slate-400 hover:text-slate-700 p-1"
+                aria-label="Close location banner"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Button (FAB) - Quick Find Me (Mobile & Desktop) */}
+      <div className="fixed sm:absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+        <Button
+          onClick={() => {
+            if (myRealTimePosition || myLocation) {
+              flyToMe();
+            } else {
+              handleRequestLocation();
+            }
+          }}
+          size="icon"
+          title="Locate my position"
+          className="h-12 w-12 rounded-full glass-cinematic shadow-2xl border border-white/70 text-blue-600 hover:scale-110 active:scale-95 transition-all flex items-center justify-center bg-white/95 hover:bg-white"
+        >
+          <LocateFixed className={`h-6 w-6 ${locationPermission === 'checking' ? 'animate-spin' : ''}`} />
+        </Button>
       </div>
 
       {/* People On The Map Panel */}
@@ -927,33 +1319,51 @@ export default function CommunityMap() {
             {listOpen && (
               <div className="max-h-56 overflow-y-auto border-t border-white/60 p-2 space-y-1.5">
                 {locations.map((loc) => {
-                  const isMe = String(loc.created_by_id) === String(user?.id);
+                  const locUserId = String(loc.created_by_id || loc.user_id || '');
+                  const isMe = locUserId === String(user?.id);
                   const isPaused = loc.sharing_status === SHARING_STATUS.PAUSED;
+                  const hasActiveSos = activeSosAlerts.some(
+                    (s) => String(s.created_by_id || s.sender_id) === locUserId
+                  );
                   return (
                     <button
-                      key={loc.id}
+                      key={loc.id || locUserId}
                       onClick={() => {
-                        if (mapRef.current) {
+                        if (mapRef.current && loc.location_lat && loc.location_lng) {
                           mapRef.current.flyTo([loc.location_lat, loc.location_lng], 15, { duration: 1 });
                         }
                       }}
-                      className="flex w-full items-center gap-2.5 rounded-xl p-2 text-left transition-all hover:bg-white/60 bg-white/40"
+                      className={`flex w-full items-center gap-2.5 rounded-xl p-2 text-left transition-all hover:bg-white/60 ${
+                        hasActiveSos ? "bg-rose-50 border border-rose-300 ring-1 ring-rose-400" : "bg-white/40"
+                      }`}
                     >
                       {loc.avatar_url ? (
-                        <img src={loc.avatar_url} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover ring-2 ring-white shadow" />
+                        <img
+                          src={loc.avatar_url}
+                          alt=""
+                          onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/7.x/initials/svg?seed=AEGIS'; }}
+                          className={`h-8 w-8 shrink-0 rounded-full object-cover ring-2 ${
+                            hasActiveSos ? "ring-rose-500 shadow-rose-500/50" : "ring-white"
+                          } shadow`}
+                        />
                       ) : (
                         <span className="text-xl leading-none">{loc.emoji || "🧍"}</span>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-slate-900">
-                          {loc.full_name || "Community member"}{isMe && <span className="text-[10px] text-blue-600"> (you)</span>}
+                        <p className="truncate text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="truncate">{loc.full_name || "Community member"}{isMe && <span className="text-[10px] text-blue-600"> (you)</span>}</span>
+                          {hasActiveSos && (
+                            <span className="shrink-0 text-[9px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-extrabold animate-pulse">
+                              🚨 SOS
+                            </span>
+                          )}
                         </p>
                         <p className="truncate text-[10px] text-slate-500">
                           {loc.location_label || `${loc.location_lat?.toFixed(2)}, ${loc.location_lng?.toFixed(2)}`}
                         </p>
                       </div>
                       <span className="shrink-0 text-[9px] font-semibold text-slate-400">
-                        {isPaused ? "Paused" : timeAgo(loc.last_active_at || loc.updated_date)}
+                        {hasActiveSos ? <span className="text-rose-600 font-bold">EMERGENCY</span> : (isPaused ? "Paused" : timeAgo(loc.last_active_at || loc.updated_date))}
                       </span>
                     </button>
                   );

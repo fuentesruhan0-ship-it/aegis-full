@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { toggleReaction, getReactionSummary, REACTION_TYPES } from "@/lib/interactions";
-import { CheckCircle2, ThumbsUp, AlertOctagon, Loader2, Eye } from "lucide-react";
+import { ThumbsUp, AlertOctagon, Loader2, Eye } from "lucide-react";
 
 const REACTION_CONFIG = {
   [REACTION_TYPES.CONFIRM]: {

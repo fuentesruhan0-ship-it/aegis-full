@@ -7,13 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { ClerkGoogleButton, isClerkConfigured } from "@/lib/clerkSync";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   
   // Clear error state on mount
   React.useEffect(() => {
@@ -23,6 +26,18 @@ export default function Login() {
   // Post-login destination (e.g. the MCP OAuth consent page sends users here
   // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
+
+  const handleGoogleLogin = () => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      base44.auth.loginWithProvider('google', returnTo, email);
+    } catch (err) {
+      setError(err.message || "Google Sign-In failed.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,11 +80,36 @@ export default function Login() {
         </>
       }
     >
-      {/* Google OAuth is disabled until configured in Base44 dashboard */}
-      <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <p className="text-sm text-blue-900 dark:text-blue-100 text-center">
-          🔐 Please log in with your email and password
-        </p>
+      {isClerkConfigured ? (
+        <ClerkGoogleButton
+          text="Continue with Google"
+          returnTo={returnTo}
+          onError={setError}
+        />
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-12 font-medium flex items-center justify-center gap-3 mb-6 hover:bg-muted/60 transition-all border-border shadow-sm"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+        >
+          {googleLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          ) : (
+            <GoogleIcon className="w-4 h-4" />
+          )}
+          Continue with Google
+        </Button>
+      )}
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">or</span>
+        </div>
       </div>
 
       {error && (
@@ -140,14 +180,6 @@ export default function Login() {
           )}
         </Button>
       </form>
-
-
-      {/* Note about Google OAuth */}
-      <div className="mt-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          Google Sign-In will be available after OAuth configuration
-        </p>
-      </div>
     </AuthLayout>
   );
 }

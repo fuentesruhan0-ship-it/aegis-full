@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { GeoJSON, Popup } from "react-leaflet";
+import { GeoJSON } from "react-leaflet";
 import { Loader2 } from "lucide-react";
 
 // PHIVOLCS Active Fault Line endpoint

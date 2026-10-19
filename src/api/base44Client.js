@@ -20,7 +20,8 @@ const createBase44Client = () => {
     token,
     functionsVersion,
     serverUrl: '',
-    appBaseUrl
+    // Keep internal routing on this app, never redirect to the platform builder domain
+    appBaseUrl: appBaseUrl && !appBaseUrl.includes('app.base44.com') ? appBaseUrl : ''
   });
 };
 

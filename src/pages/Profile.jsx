@@ -12,7 +12,7 @@ import {
 import PageHeader from "@/components/PageHeader";
 import ProfilePhotoCard from "@/components/ProfilePhotoCard";
 import {
-  UserCircle, Save, Loader2, Home as HomeIcon, Users, Plus, Phone, MapPin, Navigation
+  UserCircle, Save, Loader2, Home as HomeIcon, Users, Plus, Phone, MapPin
 } from "lucide-react";
 
 const ROLES = [

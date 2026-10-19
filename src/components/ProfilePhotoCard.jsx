@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Trash2, Smile } from "lucide-react";
+import { Camera, Loader2, Trash2 } from "lucide-react";
 
 // Saves the photo on the user's profile AND on their map marker so everyone sees it.
 async function syncAvatar(userId, url) {

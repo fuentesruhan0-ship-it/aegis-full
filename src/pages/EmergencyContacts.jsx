@@ -13,8 +13,8 @@ import {
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import {
-  Phone, Plus, Pencil, Trash2, Mail, Star, Loader2, Users, ShieldAlert, CheckCircle2,
-  AlertCircle, Radio, Sparkles
+  Phone, Plus, Pencil, Trash2, Star, Loader2, ShieldAlert, CheckCircle2,
+  AlertCircle, Radio
 } from "lucide-react";
 import { formatDialablePhone, fetchEmergencyContacts } from "@/lib/sosDispatch";
 

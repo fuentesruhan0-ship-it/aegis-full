@@ -3,8 +3,12 @@
 
 const GEMINI_MODELS = [
   'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-flash-latest'
+  'gemini-3.1-flash-lite',
+  'gemini-flash-latest',
+  'gemini-flash-lite-latest'
 ];
 
 const AEGIS_SYSTEM_PROMPT = `You are the AEGIS AI Emergency Assistant, an intelligent disaster preparedness, response, and recovery AI for the Philippines (focused on Tupi, South Cotabato and the South East Asian Institute of Technology community).
@@ -52,7 +56,7 @@ export async function queryGeminiAssistant(message, history = []) {
   });
 
   const requestBody = {
-    system_instruction: {
+    systemInstruction: {
       parts: [{ text: AEGIS_SYSTEM_PROMPT }]
     },
     contents,
@@ -64,9 +68,14 @@ export async function queryGeminiAssistant(message, history = []) {
 
   let lastError = null;
 
+  // Use Vite proxy in development to eliminate browser CORS/adblock restrictions
+  const proxyBase = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? '/gemini-api'
+    : 'https://generativelanguage.googleapis.com';
+
   for (const model of GEMINI_MODELS) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const url = `${proxyBase}/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,10 +90,10 @@ export async function queryGeminiAssistant(message, history = []) {
         const msg = err.message || 'Unknown Gemini API error';
 
         if (code === 403) {
-          throw new Error(`Gemini API 403 (Forbidden): Your Google Cloud project has been denied access or restricted. Please check your Google AI Studio account.`);
+          throw new Error(`Gemini API 403 (Forbidden): ${msg}`);
         }
         if (code === 429) {
-          throw new Error(`Gemini API 429 (Quota Exceeded): The free-tier quota for this API key has been exceeded or is set to 0. Please verify billing/quota in Google AI Studio.`);
+          throw new Error(`Gemini API 429 (Quota Exceeded): ${msg}`);
         }
         if (code === 400) {
           throw new Error(`Gemini API 400 (Bad Request): ${msg}`);

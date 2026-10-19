@@ -5,11 +5,8 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import {
-  CheckCircle2, Clock, AlertTriangle, FileText, ArrowRight,
-  Building, Zap, DollarSign, Plus, RefreshCw, ChevronRight,
-  ShieldCheck, Phone, MapPin, Calendar, HelpCircle, AlertCircle,
-  ExternalLink, Hammer, HeartHandshake, Sparkles
+import { Clock, DollarSign, Plus,
+  ShieldCheck, MapPin, Calendar, AlertCircle, HeartHandshake
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 

@@ -12,8 +12,6 @@ import {
   Eye,
   Send,
   Loader2,
-  Shield,
-  User,
   AlertCircle,
   Flag,
 } from "lucide-react";

@@ -5,10 +5,10 @@ import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/PageHeader";
-import { Bot, Send, Loader2, ShieldCheck, User, Wifi, WifiOff, AlertCircle, Sparkles } from "lucide-react";
-import { findBestMatch } from "@/lib/offlineKnowledge";
+import { Bot, Send, Loader2, ShieldCheck, User, WifiOff, AlertCircle, Sparkles, X } from "lucide-react";
 import { generateAIAssistantReply } from "@/lib/aegisAI";
 import { queryGeminiAssistant, isGeminiConfigured } from "@/lib/geminiClient";
+import { queryXKiroAssistant, isXKiroConfigured } from "@/lib/xkiroClient";
 
 const SUGGESTIONS = [
   "What should I do during an earthquake?",
@@ -20,7 +20,8 @@ const SUGGESTIONS = [
 
 function MessageBubble({ role, content, source }) {
   const isUser = role === "user";
-  const isCached = source === "cached" || source === "fallback";
+  const isCached = source === "cached";
+  const isFallback = source === "fallback";
   const isError = source === "error";
   
   return (
@@ -59,17 +60,32 @@ function MessageBubble({ role, content, source }) {
             {isError ? (
               <>
                 <AlertCircle className="h-3 w-3 text-rose-500" />
-                <span className="text-rose-600 font-medium">AI Service Notice</span>
+                <span className="text-rose-600 font-medium">Service Notice</span>
+              </>
+            ) : isFallback ? (
+              <>
+                <ShieldCheck className="h-3 w-3 text-blue-500" />
+                <span className="text-blue-600 font-medium">AEGIS Emergency Engine</span>
               </>
             ) : isCached ? (
               <>
                 <WifiOff className="h-3 w-3 text-amber-500" />
-                <span className="text-amber-600">Offline Knowledge Base</span>
+                <span className="text-amber-600">Offline Emergency Knowledge</span>
+              </>
+            ) : source === "xkiro" ? (
+              <>
+                <Sparkles className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600 font-medium">Live xKiro AI (Qwen)</span>
+              </>
+            ) : source === "gemini" ? (
+              <>
+                <Sparkles className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600 font-medium">Live Gemini AI response</span>
               </>
             ) : (
               <>
                 <Sparkles className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-600 font-medium">Live Gemini AI response</span>
+                <span className="text-emerald-600 font-medium">Live AI response</span>
               </>
             )}
           </div>
@@ -85,6 +101,7 @@ export default function Assistant() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [geminiNotice, setGeminiNotice] = useState(null);
   const scrollRef = useRef(null);
 
   // Monitor online/offline status
@@ -124,7 +141,28 @@ export default function Assistant() {
     
     try {
       if (isOnline) {
-        // 1. Prioritize Google Gemini API if configured
+        // 1. Prioritize xKiro AI API if configured
+        if (isXKiroConfigured()) {
+          try {
+            const { reply } = await queryXKiroAssistant(
+              message,
+              messages.map((m) => ({ role: m.role, content: m.content }))
+            );
+            if (reply) {
+              setMessages([...newMessages, { 
+                role: "assistant", 
+                content: reply,
+                source: "xkiro"
+              }]);
+              setGeminiNotice(null);
+              return;
+            }
+          } catch (xkiroError) {
+            console.warn("xKiro API notice:", xkiroError);
+          }
+        }
+
+        // 2. Try Google Gemini API if configured
         if (isGeminiConfigured()) {
           try {
             const { reply } = await queryGeminiAssistant(
@@ -135,31 +173,32 @@ export default function Assistant() {
               setMessages([...newMessages, { 
                 role: "assistant", 
                 content: reply,
-                source: "online"
+                source: "gemini"
               }]);
+              setGeminiNotice(null);
               return;
             }
           } catch (geminiError) {
-            console.error("Gemini API error:", geminiError);
-            const isAuthOrQuota = geminiError.message?.includes("403") || geminiError.message?.includes("429");
+            console.warn("Gemini API notice:", geminiError);
+            const rawMsg = geminiError.message?.replace(/^Error:\s*/, "") || "Gemini API unavailable";
+            const isAuth = geminiError.message?.includes("403");
+            const isQuota = geminiError.message?.includes("429");
             
-            if (isAuthOrQuota) {
-              const notice = geminiError.message?.includes("403")
-                ? "**Project Access Denied (HTTP 403)**: The Google Cloud project linked to this Gemini API key has been denied access or restricted. Please generate a new key or check permissions at [Google AI Studio](https://aistudio.google.com/app/apikey)."
-                : "**Quota Limit Exceeded (HTTP 429)**: The Gemini free-tier quota for this API key has been exhausted (limit reached). Please verify your quota at [Google AI Studio](https://aistudio.google.com/app/apikey).";
-
-              // Show the service notice message
-              const { answer } = findBestMatch(message);
-              setMessages([
-                ...newMessages,
-                {
-                  role: "assistant",
-                  content: `⚠️ ${notice}\n\n---\n\n*Emergency Knowledge Base response for your query:* \n\n${answer}`,
-                  source: "error"
-                }
-              ]);
-              return;
-            }
+            // Set notice banner so user is informed without disrupting the conversation
+            setGeminiNotice({
+              title: isAuth
+                ? "Gemini API Key Notice (HTTP 403)"
+                : isQuota
+                ? "Gemini Free Quota Exceeded (HTTP 429)"
+                : "Gemini AI Status Notice",
+              message: isAuth 
+                ? "Your API key's Google Cloud project has access restrictions or the Generative Language API is disabled. AEGIS has automatically switched to the built-in Emergency Engine."
+                : isQuota
+                ? "The Gemini free-tier quota for this API key has been reached. AEGIS has automatically switched to the built-in Emergency Engine."
+                : `Gemini service returned an error (${rawMsg}). AEGIS has automatically switched to the built-in Emergency Engine.`,
+              link: "https://aistudio.google.com/app/apikey",
+              linkText: "Create a fresh key at Google AI Studio"
+            });
           }
         }
 
@@ -172,7 +211,7 @@ export default function Assistant() {
                 history: messages.map((m) => ({ role: m.role, content: m.content })),
               }),
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("timeout")), 8000)
+                setTimeout(() => reject(new Error("timeout")), 6000)
               )
             ]);
             
@@ -187,35 +226,35 @@ export default function Assistant() {
             }
           }
         } catch (onlineError) {
-          console.log("Base44 backend function unavailable:", onlineError.message);
+          console.log("Base44 backend function unavailable, using local AEGIS engine:", onlineError.message);
         }
 
-        // 3. Fallback to offline knowledge base when online engines fail
-        const { answer } = findBestMatch(message);
+        // 3. Fallback to local AEGIS Emergency Engine
+        const fallbackReply = generateAIAssistantReply(message, messages);
         setMessages([...newMessages, { 
           role: "assistant", 
-          content: answer,
-          source: "cached" // Correctly labeled as cached
+          content: fallbackReply,
+          source: "fallback"
         }]);
         return;
       }
       
       // Offline mode
-      const { answer, source } = findBestMatch(message);
+      const offlineReply = generateAIAssistantReply(message, messages);
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: answer,
-        source: source || "cached"
+        content: offlineReply,
+        source: "cached"
       }]);
       
     } catch (e) {
       console.error("Assistant error:", e);
-      const { answer } = findBestMatch(message);
+      const fallbackReply = generateAIAssistantReply(message, messages);
       setMessages([
         ...newMessages,
         { 
           role: "assistant", 
-          content: answer,
+          content: fallbackReply,
           source: "cached"
         },
       ]);
@@ -238,6 +277,10 @@ export default function Assistant() {
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
           !isOnline
             ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+            : isXKiroConfigured()
+            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+            : geminiNotice
+            ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
             : isGeminiConfigured()
             ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
             : "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
@@ -247,6 +290,16 @@ export default function Assistant() {
               <WifiOff className="h-4 w-4" />
               <span>Offline Mode - Cached Knowledge</span>
             </>
+          ) : isXKiroConfigured() ? (
+            <>
+              <Sparkles className="h-4 w-4 text-emerald-600" />
+              <span>Online Mode - Live AI (xKiro Active)</span>
+            </>
+          ) : geminiNotice ? (
+            <>
+              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              <span>Online Mode - AEGIS Emergency Engine</span>
+            </>
           ) : isGeminiConfigured() ? (
             <>
               <Sparkles className="h-4 w-4 text-emerald-600" />
@@ -254,12 +307,42 @@ export default function Assistant() {
             </>
           ) : (
             <>
-              <Wifi className="h-4 w-4 text-blue-600" />
-              <span>Online Mode - Emergency Knowledge</span>
+              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              <span>Online Mode - AEGIS Emergency Engine</span>
             </>
           )}
         </div>
       </div>
+
+      {/* Dismissible Gemini API Status Banner if there is an API key issue */}
+      {geminiNotice && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/95 p-3.5 text-xs text-amber-900 shadow-sm backdrop-blur">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-900">{geminiNotice.title}</p>
+              <p className="mt-0.5 text-amber-800 leading-relaxed">{geminiNotice.message}</p>
+              {geminiNotice.link && (
+                <a
+                  href={geminiNotice.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 font-semibold text-amber-950 underline hover:text-black"
+                >
+                  {geminiNotice.linkText} &rarr;
+                </a>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setGeminiNotice(null)}
+            className="rounded p-1 text-amber-700 hover:bg-amber-100 hover:text-amber-900"
+            title="Dismiss notice"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Chat area */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 shadow-sm backdrop-blur-xl backdrop-saturate-150">

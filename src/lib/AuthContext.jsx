@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+import { getAccessToken } from '@base44/sdk';
 
 const AuthContext = createContext();
 
@@ -30,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       }
       setIsLoadingPublicSettings(false);
 
-      // Check for an active session token
-      const currentToken = (typeof localStorage !== 'undefined' && (
+      // Check for an active session token (including URL access_token from OAuth callbacks)
+      const currentToken = getAccessToken() || (typeof localStorage !== 'undefined' && (
         localStorage.getItem('mock_auth_token') || 
         localStorage.getItem('base44_access_token')
       )) || appParams.token;
@@ -95,6 +96,16 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Auth session terminated');
     } catch (e) {
       console.warn('⚠️ Auth logout warning:', e);
+    }
+
+    // Also sign out of Clerk if active
+    if (typeof window !== 'undefined' && window.Clerk?.signOut) {
+      try {
+        await window.Clerk.signOut();
+        console.log('✅ Clerk session signed out');
+      } catch (e) {
+        console.warn('⚠️ Clerk logout warning:', e);
+      }
     }
     
     // Clear only session tokens and temporary position cache

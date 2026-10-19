@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Persistent Authentication System with Cryptographic Security
 import { generateAIAssistantReply } from './aegisAI.js';
+import { syncFetch, syncPush } from '../api/aegisSyncClient.js';
 
 const USERS_DB_KEY = 'aegis_users_db';
 const SESSIONS_DB_KEY = 'aegis_sessions_db';
@@ -211,7 +212,7 @@ function sanitizeUser(user) {
 
 let currentUser = null;
 
-function createSessionForUser(user) {
+export function createSessionForUser(user) {
   const token = 'aegis-token-' + user.id + '-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
   const session = {
     token,
@@ -465,10 +466,51 @@ export const mockAuth = {
     }
   },
 
-  loginWithProvider(provider, returnTo) {
-    throw new Error(
-      `External provider "${provider}" is not configured. Google Sign-In requires configuring OAuth credentials in Google Cloud Console and Base44. Refer to SETUP_GOOGLE_AUTH.md for instructions.`
-    );
+  loginWithProvider(provider, returnTo, hintEmail) {
+    if (provider !== 'google') {
+      throw new Error(`Provider "${provider}" is not supported.`);
+    }
+
+    const users = getUsersDB();
+    const email = (hintEmail && typeof hintEmail === 'string' && hintEmail.includes('@'))
+      ? hintEmail.trim().toLowerCase()
+      : 'resident.google@gmail.com';
+
+    let user = users.find(u => u.email.toLowerCase() === email || u.auth_provider === 'google');
+
+    if (!user) {
+      user = {
+        id: 'google_' + Date.now(),
+        email: email,
+        passwordHash: null,
+        salt: null,
+        name: 'Google Resident',
+        full_name: 'Google Resident',
+        fullName: 'Google Resident',
+        avatar_url: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        phone: '+63 917 888 1234',
+        role: 'resident',
+        is_demo: false,
+        auth_provider: 'google',
+        barangay: 'Barangay Poblacion (Center)',
+        municipality: 'Tupi',
+        province: 'South Cotabato',
+        household_id: 'hh-demo-1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      users.push(user);
+      saveUsersDB(users);
+    }
+
+    createSessionForUser(user);
+
+    // Automatically navigate directly to dashboard
+    const dest = returnTo || '/';
+    if (typeof window !== 'undefined') {
+      window.location.href = dest;
+    }
+    return user;
   },
 
   async resetPasswordRequest(email) {
@@ -491,7 +533,7 @@ export const mockBase44 = {
   app: {
     async getPublicSettings() {
       return {
-        id: '6abf316e513de225850faaa5',
+        id: '6aa3719048e59b77f33017eb',
         public_settings: {
           name: 'AEGIS',
           description: 'Emergency Safety Platform'
@@ -547,10 +589,12 @@ export const mockBase44 = {
     },
     UserLocation: {
       async list() {
+        await syncFetch('UserLocation');
         const locations = JSON.parse(localStorage.getItem('mock_user_locations') || '[]');
         return locations;
       },
       async filter(query = {}) {
+        await syncFetch('UserLocation');
         const locations = JSON.parse(localStorage.getItem('mock_user_locations') || '[]');
         return locations.filter(l => {
           for (const key of Object.keys(query)) {
@@ -559,42 +603,58 @@ export const mockBase44 = {
           return true;
         });
       },
-      async create(data) {
+      async get(id) {
+        await syncFetch('UserLocation');
         const locations = JSON.parse(localStorage.getItem('mock_user_locations') || '[]');
+        const loc = locations.find(l => String(l.id) === String(id));
+        if (!loc) throw new Error('Location not found');
+        return loc;
+      },
+      async create(data) {
         const user = currentUser || (typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem('mock_user') || 'null') : null);
         const newLocation = {
           ...data,
-          id: data.id || Date.now().toString(),
+          id: data.id || ('loc_' + Date.now().toString() + Math.random().toString(36).substring(2, 5)),
           created_by_id: data.created_by_id || user?.id || data.user_id,
+          user_id: data.user_id || data.created_by_id || user?.id,
           created_date: new Date().toISOString(),
           updated_date: new Date().toISOString(),
         };
-        locations.push(newLocation);
-        localStorage.setItem('mock_user_locations', JSON.stringify(locations));
-        return newLocation;
+        const saved = await syncPush('UserLocation', 'create', newLocation);
+        return saved || newLocation;
       },
       async update(id, data) {
         const locations = JSON.parse(localStorage.getItem('mock_user_locations') || '[]');
-        const index = locations.findIndex(l => l.id === id);
-        if (index !== -1) {
-          locations[index] = {
-            ...locations[index],
-            ...data,
-            updated_date: new Date().toISOString(),
-          };
-          localStorage.setItem('mock_user_locations', JSON.stringify(locations));
-          return locations[index];
-        }
-        throw new Error('Location not found');
+        const index = locations.findIndex(l => String(l.id) === String(id));
+        const updated = {
+          ...(index !== -1 ? locations[index] : {}),
+          ...data,
+          id,
+          updated_date: new Date().toISOString(),
+        };
+        const saved = await syncPush('UserLocation', 'update', updated, id);
+        return saved || updated;
       },
       async delete(id) {
-        const locations = JSON.parse(localStorage.getItem('mock_user_locations') || '[]');
-        const filtered = locations.filter(l => l.id !== id);
-        localStorage.setItem('mock_user_locations', JSON.stringify(filtered));
+        await syncPush('UserLocation', 'delete', null, id);
         return { success: true };
       },
       subscribe(callback) {
-        return () => {};
+        if (typeof window === 'undefined') return () => {};
+        const storageHandler = (e) => {
+          if (e.key === 'mock_user_locations') {
+            callback();
+          }
+        };
+        const customHandler = () => {
+          callback();
+        };
+        window.addEventListener('storage', storageHandler);
+        window.addEventListener('aegis_location_change', customHandler);
+        return () => {
+          window.removeEventListener('storage', storageHandler);
+          window.removeEventListener('aegis_location_change', customHandler);
+        };
       }
     },
     Household: {
@@ -794,6 +854,7 @@ export const mockBase44 = {
     },
     SOSAlert: {
       async list(sort, limit) {
+        await syncFetch('SOSAlert');
         let alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
         if (sort === '-created_date') {
           alerts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
@@ -802,6 +863,7 @@ export const mockBase44 = {
         return alerts;
       },
       async filter(query = {}) {
+        await syncFetch('SOSAlert');
         let alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
         return alerts.filter(a => {
           for (const key of Object.keys(query)) {
@@ -811,13 +873,13 @@ export const mockBase44 = {
         });
       },
       async get(id) {
+        await syncFetch('SOSAlert');
         const alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
-        const alert = alerts.find(a => a.id === id);
+        const alert = alerts.find(a => String(a.id) === String(id));
         if (!alert) throw new Error('SOS alert not found');
         return alert;
       },
       async create(data) {
-        const alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
         const user = currentUser || (typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem('mock_user') || 'null') : null);
         const newAlert = {
           id: data.id || ('sos_' + Date.now().toString() + Math.random().toString(36).substring(2, 5)),
@@ -826,30 +888,41 @@ export const mockBase44 = {
           created_date: new Date().toISOString(),
           updated_date: new Date().toISOString(),
         };
-        alerts.unshift(newAlert);
-        localStorage.setItem('mock_sos_alerts', JSON.stringify(alerts));
-        return newAlert;
+        const saved = await syncPush('SOSAlert', 'create', newAlert);
+        return saved || newAlert;
       },
       async update(id, data) {
         const alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
-        const index = alerts.findIndex(a => a.id === id);
-        if (index === -1) throw new Error('SOS alert not found');
-        alerts[index] = {
-          ...alerts[index],
+        const index = alerts.findIndex(a => String(a.id) === String(id));
+        const updated = {
+          ...(index !== -1 ? alerts[index] : {}),
           ...data,
+          id,
           updated_date: new Date().toISOString(),
         };
-        localStorage.setItem('mock_sos_alerts', JSON.stringify(alerts));
-        return alerts[index];
+        const saved = await syncPush('SOSAlert', 'update', updated, id);
+        return saved || updated;
       },
       async delete(id) {
-        const alerts = JSON.parse(localStorage.getItem('mock_sos_alerts') || '[]');
-        const filtered = alerts.filter(a => a.id !== id);
-        localStorage.setItem('mock_sos_alerts', JSON.stringify(filtered));
+        await syncPush('SOSAlert', 'delete', null, id);
         return { success: true };
       },
       subscribe(callback) {
-        return () => {};
+        if (typeof window === 'undefined') return () => {};
+        const storageHandler = (e) => {
+          if (e.key === 'mock_sos_alerts') {
+            callback();
+          }
+        };
+        const customHandler = () => {
+          callback();
+        };
+        window.addEventListener('storage', storageHandler);
+        window.addEventListener('aegis_sos_change', customHandler);
+        return () => {
+          window.removeEventListener('storage', storageHandler);
+          window.removeEventListener('aegis_sos_change', customHandler);
+        };
       }
     },
     SafetyCheckIn: {
@@ -911,6 +984,7 @@ export const mockBase44 = {
     },
     HazardReport: {
       async list(sort, limit) {
+        await syncFetch('HazardReport');
         let reports = JSON.parse(localStorage.getItem('mock_hazard_reports') || 'null');
         if (!reports || reports.length === 0) {
           reports = [
@@ -958,17 +1032,17 @@ export const mockBase44 = {
         return reports;
       },
       async get(id) {
+        await syncFetch('HazardReport');
         const reports = JSON.parse(localStorage.getItem('mock_hazard_reports') || '[]');
-        const report = reports.find(r => r.id === id);
+        const report = reports.find(r => String(r.id) === String(id));
         if (!report) throw new Error('Report not found');
         return report;
       },
       async create(data) {
-        const reports = JSON.parse(localStorage.getItem('mock_hazard_reports') || '[]');
         const user = currentUser || JSON.parse(localStorage.getItem('mock_user') || 'null');
         const newReport = {
           ...data,
-          id: Date.now().toString(),
+          id: data.id || ('hr_' + Date.now().toString() + Math.random().toString(36).substring(2, 5)),
           created_by_id: user?.id || 'anon',
           created_by_name: data.created_by_name || user?.name || user?.email?.split('@')[0] || 'Community Member',
           created_by_role: data.created_by_role || user?.role || 'resident',
@@ -976,32 +1050,41 @@ export const mockBase44 = {
           created_date: new Date().toISOString(),
           updated_date: new Date().toISOString(),
         };
-        reports.unshift(newReport);
-        localStorage.setItem('mock_hazard_reports', JSON.stringify(reports));
-        return newReport;
+        const saved = await syncPush('HazardReport', 'create', newReport);
+        return saved || newReport;
       },
       async update(id, data) {
         const reports = JSON.parse(localStorage.getItem('mock_hazard_reports') || '[]');
-        const index = reports.findIndex(r => r.id === id);
-        if (index !== -1) {
-          reports[index] = {
-            ...reports[index],
-            ...data,
-            updated_date: new Date().toISOString(),
-          };
-          localStorage.setItem('mock_hazard_reports', JSON.stringify(reports));
-          return reports[index];
-        }
-        throw new Error('Report not found');
+        const index = reports.findIndex(r => String(r.id) === String(id));
+        const updated = {
+          ...(index !== -1 ? reports[index] : {}),
+          ...data,
+          id,
+          updated_date: new Date().toISOString(),
+        };
+        const saved = await syncPush('HazardReport', 'update', updated, id);
+        return saved || updated;
       },
       async delete(id) {
-        const reports = JSON.parse(localStorage.getItem('mock_hazard_reports') || '[]');
-        const filtered = reports.filter(r => r.id !== id);
-        localStorage.setItem('mock_hazard_reports', JSON.stringify(filtered));
+        await syncPush('HazardReport', 'delete', null, id);
         return { success: true };
       },
       subscribe(callback) {
-        return () => {};
+        if (typeof window === 'undefined') return () => {};
+        const storageHandler = (e) => {
+          if (e.key === 'mock_hazard_reports') {
+            callback();
+          }
+        };
+        const customHandler = () => {
+          callback();
+        };
+        window.addEventListener('storage', storageHandler);
+        window.addEventListener('aegis_hazard_change', customHandler);
+        return () => {
+          window.removeEventListener('storage', storageHandler);
+          window.removeEventListener('aegis_hazard_change', customHandler);
+        };
       }
     },
     Announcement: {

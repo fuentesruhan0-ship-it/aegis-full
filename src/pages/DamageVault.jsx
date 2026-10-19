@@ -6,10 +6,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
 import {
-  FileText, Shield, Camera, Upload, Plus, Trash2, Edit3, Eye, EyeOff,
-  CheckCircle2, AlertTriangle, Download, ExternalLink, Calendar,
-  Building, Lock, Unlock, Search, Filter, Sparkles, FolderLock,
-  FileCheck, MapPin, DollarSign, Image as ImageIcon, Share2, Printer
+  FileText, Shield, Camera, Plus, Trash2, Eye,
+  CheckCircle2, Calendar,
+  Building, Lock, Unlock, Search, FolderLock,
+  FileCheck, MapPin, Printer
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { CircleMarker, Popup } from "react-leaflet";
 import { Loader2, Bell } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 
 // Philippines region bounds
 const MIN_LAT = 4;

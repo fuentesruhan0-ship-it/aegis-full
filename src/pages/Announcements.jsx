@@ -42,14 +42,10 @@ import {
   GraduationCap,
   Wrench,
   Search,
-  Filter,
   MessageSquare,
   Pin,
   Trash2,
   Edit2,
-  User,
-  Shield,
-  Users,
   Flag,
 } from "lucide-react";
 

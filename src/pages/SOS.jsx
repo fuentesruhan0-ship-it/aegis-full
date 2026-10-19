@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/PageHeader";
-import EmptyState from "@/components/EmptyState";
 import {
   Siren, MapPin, Phone, Users, ShieldCheck, X, Loader2, AlertCircle, CheckCircle2,
-  AlertTriangle, Radio, BellRing, Compass, Sparkles, Plus, Flame, Shield, HeartPulse,
-  Megaphone, Send, Share2, Copy, ExternalLink, MessageSquare, PhoneCall, Check
+  AlertTriangle, Radio, Plus, Flame, Shield, HeartPulse,
+  Megaphone, Send, Share2, Copy, MessageSquare, PhoneCall, Check
 } from "lucide-react";
 import {
   sendSOSAlert,
@@ -20,14 +19,9 @@ import {
   cancelSOSAlert,
   getDeliveryResults,
   fetchEmergencyContacts,
-  captureGPS,
-  generateSOSAlertMessage,
   getSMSDispatchUrl,
   formatDialablePhone,
-  getDirectPhoneCallUrl,
-  launchDirectPhoneCall,
-  DELIVERY_STATUS,
-  SOS_STATUS
+  launchDirectPhoneCall
 } from "@/lib/sosDispatch";
 
 // Official Emergency Hotlines for Tupi, South Cotabato & National Hotlines

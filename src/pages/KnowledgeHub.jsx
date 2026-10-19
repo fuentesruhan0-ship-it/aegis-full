@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   BookOpen, Search, ChevronRight, Globe, Layers, Activity,
-  Mountain, Shield, AlertTriangle, Building, Waves, Compass,
-  Clock, ExternalLink, BookmarkCheck
+  Mountain, Shield, AlertTriangle, Building,
+  Clock, BookmarkCheck
 } from "lucide-react";
 
 const GLOSSARY = [

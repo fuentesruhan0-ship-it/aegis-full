@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ShieldAlert, Flag, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { Flag, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { flagContent, FLAG_REASONS } from '@/lib/interactions';
 
 const REASON_OPTIONS = [

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   MapPin, Navigation, Search, Tent, Building2, TreePine,
-  Phone, Clock, Users, Droplets, Pill, Wifi, Car, ChevronRight,
-  LocateFixed, Loader2, ExternalLink, Shield
+  Phone, Users, ChevronRight,
+  LocateFixed, Loader2
 } from "lucide-react";
 
 // Evacuation centers and safe spaces for Tupi, South Cotabato area

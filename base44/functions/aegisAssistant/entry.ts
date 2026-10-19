@@ -17,8 +17,13 @@ Respond helpfully and stay within these boundaries at all times.`;
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Allow public emergency guidance for both authenticated users and community visitors
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (_) {
+      // Public emergency query
+    }
 
     const body = await req.json().catch(() => ({}));
     const message = body.message;

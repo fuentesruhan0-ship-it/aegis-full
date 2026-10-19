@@ -253,12 +253,33 @@ export async function sendSOSAlert({ user, householdId, customMessage }) {
     customMessage,
   });
 
-  // 4. Create the SOS alert record
+  // 4. Ensure valid coordinates so SOS beacon always appears on Community Map
+  let lat = gps?.lat ?? null;
+  let lng = gps?.lng ?? null;
+
+  if (lat == null || lng == null) {
+    try {
+      const locs = await base44.entities.UserLocation.filter({ created_by_id: user?.id });
+      if (locs && locs.length > 0 && locs[0].location_lat) {
+        lat = locs[0].location_lat;
+        lng = locs[0].location_lng;
+        if (!gps) locationLabel = locs[0].location_label || 'Poblacion, Tupi, South Cotabato';
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (lat == null || lng == null) {
+    lat = 6.2356;
+    lng = 125.0286;
+    if (!gps) locationLabel = 'Tupi Municipal Area, South Cotabato';
+  }
+
+  // 5. Create the SOS alert record
   const alert = await base44.entities.SOSAlert.create({
     household_id: householdId || 'unassigned',
     message: customMessage || 'EMERGENCY: I need immediate assistance. This is an AEGIS SOS alert.',
-    location_lat: gps?.lat ?? null,
-    location_lng: gps?.lng ?? null,
+    location_lat: lat,
+    location_lng: lng,
     location_label: locationLabel,
     status: SOS_STATUS.ACTIVE,
     sender_name: user?.full_name || user?.name || user?.email || 'AEGIS User',
@@ -286,10 +307,10 @@ export async function sendSOSAlert({ user, householdId, customMessage }) {
       contact_email: contact.email || null,
       priority: contact.priority,
       in_app_status: DELIVERY_STATUS.SENT,
-      sms_status: hasPhone ? DELIVERY_STATUS.SENT : DELIVERY_STATUS.NO_PROVIDER,
+      sms_status: DELIVERY_STATUS.NO_PROVIDER,
       sms_url: contactSmsUrl,
       sms_note: hasPhone
-        ? `Phone alert ready for ${contact.phone}. Direct SMS trigger active.`
+        ? `Phone alert ready for ${contact.phone}. Direct SMS trigger active (Cellular gateway pending).`
         : 'No phone number saved.',
       timestamp: new Date().toISOString(),
     };

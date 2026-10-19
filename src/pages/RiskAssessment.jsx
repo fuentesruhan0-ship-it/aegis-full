@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   ShieldAlert, MapPin, LocateFixed, Activity, BookOpen,
-  CheckCircle2, AlertTriangle, ArrowRight, Sparkles, Download,
-  ExternalLink, BookmarkCheck, Shield, ChevronRight, X
+  CheckCircle2, ArrowRight, Sparkles, BookmarkCheck, Shield
 } from "lucide-react";
 import {
   TUPI_BARANGAYS,

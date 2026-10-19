@@ -11,6 +11,7 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { ClerkGoogleButton, isClerkConfigured } from "@/lib/clerkSync";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -96,7 +97,7 @@ export default function Register() {
   };
 
   const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", safeReturnTo());
+    base44.auth.loginWithProvider("google", safeReturnTo(), email);
   };
 
   if (showOtp) {
@@ -170,11 +171,32 @@ export default function Register() {
         </>
       }
     >
-      {/* Google OAuth disabled until configured */}
-      <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <p className="text-sm text-blue-900 dark:text-blue-100 text-center">
-          🔐 Create your account with email and password
-        </p>
+      {/* Google Sign-Up */}
+      {isClerkConfigured ? (
+        <ClerkGoogleButton
+          text="Sign up with Google"
+          returnTo={safeReturnTo()}
+          onError={setError}
+        />
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-12 font-medium flex items-center justify-center gap-3 mb-6 hover:bg-muted/60 transition-all border-border shadow-sm"
+          onClick={handleGoogle}
+        >
+          <GoogleIcon className="w-4 h-4" />
+          Sign up with Google
+        </Button>
+      )}
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">or</span>
+        </div>
       </div>
 
       {error && (

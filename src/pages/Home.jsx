@@ -5,12 +5,11 @@ import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 import StatCard from "@/components/StatCard";
-import EmptyState from "@/components/EmptyState";
 import {
-  Siren, Home as HomeIcon, Bot, Megaphone, AlertTriangle,
-  Users, ShieldCheck, ArrowRight, Plus, MapPin, Clock, ChevronRight,
+  Siren, Home as HomeIcon, Megaphone, AlertTriangle,
+  Users, ShieldCheck, ArrowRight, MapPin, Clock, ChevronRight,
   ShieldAlert, Backpack, BookOpen, Tent, FolderLock, Building2, HeartHandshake,
-  Heart, Radio, Compass, Navigation, CheckCircle2, UserCheck, Phone
+  Heart, Compass, CheckCircle2, UserCheck, Phone
 } from "lucide-react";
 import { filterVisibleLocations } from "@/lib/locationSharing";
 import { EVACUATION_CENTERS } from "./EvacuationLocator";

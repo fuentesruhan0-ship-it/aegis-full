@@ -12,8 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import {
-  Siren, Plus, Trash2, Pencil, Calendar, Clock, MapPin,
-  Users, CheckCircle2, Play, AlertTriangle, ChevronRight,
+  Siren, Plus, Trash2, Pencil, Calendar, Clock, MapPin, CheckCircle2, Play,
   Timer, ClipboardList, Star, RotateCcw
 } from "lucide-react";
 

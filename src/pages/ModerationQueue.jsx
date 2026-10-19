@@ -10,9 +10,8 @@ import {
   hideComment,
   deleteComment,
   FLAG_STATUSES,
-  TARGET_TYPES,
 } from '@/lib/interactions';
-import { getAuditLogs, AUDIT_ACTIONS } from '@/lib/auditLog';
+import { getAuditLogs } from '@/lib/auditLog';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -21,17 +20,9 @@ import {
   EyeOff,
   Eye,
   Trash2,
-  Clock,
-  User,
-  AlertTriangle,
   History,
-  Filter,
   Check,
-  ExternalLink,
   Loader2,
-  FileText,
-  Shield,
-  MessageSquare,
   AlertOctagon,
 } from 'lucide-react';
 

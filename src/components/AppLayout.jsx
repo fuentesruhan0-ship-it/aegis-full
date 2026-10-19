@@ -11,9 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Shield, LayoutDashboard, Siren, Home, Users, Phone, Bot,
-  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, ChevronRight, MapPin, ShieldAlert, Backpack, BookOpen, Tent, FolderLock, Building2, HeartHandshake, Heart
+import { LayoutDashboard, Siren, Home, Phone, Bot,
+  AlertTriangle, Megaphone, UserCircle, Menu, X, LogOut, MapPin, ShieldAlert, Backpack, BookOpen, Tent, FolderLock, Building2, HeartHandshake, Heart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

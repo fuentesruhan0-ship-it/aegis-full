@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -34,9 +35,11 @@ import RecoveryTracker from '@/pages/RecoveryTracker';
 import VolunteerCoordination from '@/pages/VolunteerCoordination';
 import ModerationQueue from '@/pages/ModerationQueue';
 import { Navigate } from 'react-router-dom';
+import { ClerkProvider, AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
+import { ClerkAuthSync, CLERK_PUBLISHABLE_KEY, isClerkConfigured } from '@/lib/clerkSync';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -47,15 +50,9 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+  // Handle critical user registration errors
+  if (authError && authError.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
   }
 
   // Render the main app
@@ -69,6 +66,23 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* SSO Callback for Clerk */}
+      <Route
+        path="/sso-callback"
+        element={
+          <div className="fixed inset-0 flex items-center justify-center bg-background">
+            <div className="text-center space-y-4">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-sm text-muted-foreground">Completing sign-in...</p>
+              <AuthenticateWithRedirectCallback
+                signInForceRedirectUrl="/"
+                signUpForceRedirectUrl="/"
+              />
+            </div>
+          </div>
+        }
+      />
 
       {/* Authenticated app routes */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/landing" replace />} />}>
@@ -100,11 +114,10 @@ const AuthenticatedApp = () => {
   );
 };
 
-
-function App() {
-
+function AppContent() {
   return (
     <AuthProvider>
+      {isClerkConfigured && <ClerkAuthSync />}
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
@@ -113,7 +126,19 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+function App() {
+  if (isClerkConfigured) {
+    return (
+      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+        <AppContent />
+      </ClerkProvider>
+    );
+  }
+
+  return <AppContent />;
+}
+
+export default App;

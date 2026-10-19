@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   Backpack, Plus, Trash2, Pencil, AlertTriangle, CheckCircle2,
-  ShieldCheck, Droplets, Pill, Wrench, FileText, Shirt, User,
-  Clock, Package, Sparkles, ChevronRight, RefreshCw
+  ShieldCheck, Droplets, Pill, Wrench, FileText, Shirt, User, Package, Sparkles, RefreshCw
 } from "lucide-react";
 
 const STORAGE_KEY = "aegis_gobag_items";
