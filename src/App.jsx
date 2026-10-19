@@ -37,6 +37,7 @@ import ModerationQueue from '@/pages/ModerationQueue';
 import { Navigate } from 'react-router-dom';
 import { ClerkProvider, AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import { ClerkAuthSync, CLERK_PUBLISHABLE_KEY, isClerkConfigured } from '@/lib/clerkSync';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
@@ -114,10 +115,31 @@ const AuthenticatedApp = () => {
   );
 };
 
+function SafeClerkAuthSync() {
+  if (!isClerkConfigured) return null;
+  return (
+    <ErrorBoundary fallback={() => null}>
+      <ClerkAuthSync />
+    </ErrorBoundary>
+  );
+}
+
+function SafeClerkProvider({ children }) {
+  if (!isClerkConfigured) return children;
+
+  return (
+    <ErrorBoundary fallback={() => children}>
+      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+        {children}
+      </ClerkProvider>
+    </ErrorBoundary>
+  );
+}
+
 function AppContent() {
   return (
     <AuthProvider>
-      {isClerkConfigured && <ClerkAuthSync />}
+      <SafeClerkAuthSync />
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
@@ -130,15 +152,13 @@ function AppContent() {
 }
 
 function App() {
-  if (isClerkConfigured) {
-    return (
-      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+  return (
+    <ErrorBoundary>
+      <SafeClerkProvider>
         <AppContent />
-      </ClerkProvider>
-    );
-  }
-
-  return <AppContent />;
+      </SafeClerkProvider>
+    </ErrorBoundary>
+  );
 }
 
 export default App;

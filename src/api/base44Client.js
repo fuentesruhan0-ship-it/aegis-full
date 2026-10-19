@@ -4,7 +4,10 @@ import { mockBase44 } from '../lib/mockAuth.js';
 
 const { appId, functionsVersion, appBaseUrl } = appParams;
 
-const USE_MOCK = !appBaseUrl || !!import.meta.env?.DEV;
+// AEGIS uses mockBase44 for all entity operations and local storage persistence.
+// In standalone web deployments (like Vercel) and development, mockBase44 ensures
+// all entities (UserLocation, Household, SOSAlert, etc.) and public settings function reliably.
+const USE_MOCK = import.meta.env?.VITE_USE_REAL_BACKEND === 'true' ? false : true;
 
 // Function to create a fresh client instance
 const createBase44Client = () => {
@@ -15,13 +18,27 @@ const createBase44Client = () => {
   // Get the current token (might be null after logout)
   const token = getAccessToken();
   
-  return createClient({
+  const realClient = createClient({
     appId,
     token,
     functionsVersion,
     serverUrl: '',
     // Keep internal routing on this app, never redirect to the platform builder domain
     appBaseUrl: appBaseUrl && !appBaseUrl.includes('app.base44.com') ? appBaseUrl : ''
+  });
+
+  // Ensure entities are always available even if real backend is partially configured
+  return new Proxy(realClient, {
+    get(target, prop) {
+      if (prop === 'entities') {
+        return new Proxy(target.entities || {}, {
+          get(entTarget, entProp) {
+            return entTarget[entProp] || mockBase44.entities[entProp];
+          }
+        });
+      }
+      return target[prop] || mockBase44[prop];
+    }
   });
 };
 

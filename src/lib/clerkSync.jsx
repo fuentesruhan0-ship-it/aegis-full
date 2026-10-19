@@ -111,8 +111,6 @@ export function ClerkAuthSync() {
  * Google Sign-In button powered by Clerk's official Google OAuth flow.
  */
 export function ClerkGoogleButton({ text = "Continue with Google", returnTo = "/", onError }) {
-  const { signIn, isLoaded: signInLoaded } = useSignIn();
-  const { openSignIn } = useClerk();
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
