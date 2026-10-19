@@ -267,6 +267,20 @@ function FlyToMe({ trigger, location, realtimePos }) {
   return null;
 }
 
+function MapStyleFilter({ filter }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    const tilePane = container?.querySelector(".leaflet-tile-pane");
+    if (tilePane) {
+      tilePane.style.filter = filter || "none";
+    }
+  }, [filter, map]);
+
+  return null;
+}
+
 export default function CommunityMap() {
   const { user } = useAuth();
   const [locations, setLocations] = useState([]);
@@ -286,7 +300,7 @@ export default function CommunityMap() {
   const [listOpen, setListOpen] = useState(true);
   const [flyTrigger, setFlyTrigger] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [mapStyle, setMapStyle] = useState("dark_topo");
+  const [mapStyle, setMapStyle] = useState("alidade_smooth_dark");
   const [showQuakes, setShowQuakes] = useState(true);
   const [showFaults, setShowFaults] = useState(false);
   const [showPeople, setShowPeople] = useState(true);
@@ -370,6 +384,62 @@ export default function CommunityMap() {
     return () => { cancelled = true; };
   }, []);
 
+  // Load Household members for privacy filtering
+  const loadHousehold = useCallback(async () => {
+    if (!user?.household_id) return;
+    try {
+      const hh = await base44.entities.Household.get(user.household_id);
+      if (hh?.member_user_ids) {
+        setHouseholdMemberIds(hh.member_user_ids.map(String));
+      }
+    } catch { /* non-critical */ }
+  }, [user?.household_id]);
+
+  // Load Active SOS alerts
+  const loadSosAlerts = useCallback(async () => {
+    try {
+      const list = await base44.entities.SOSAlert.filter({ status: "active" }, "-created_date", 50);
+      setActiveSosAlerts(list || []);
+    } catch (e) {
+      console.error("Failed to load SOS alerts:", e);
+    }
+  }, []);
+
+  // Load User Locations with opt-in and privacy filtering
+  const loadLocations = useCallback(async () => {
+    try {
+      const list = await base44.entities.UserLocation.list("-updated_date", 500);
+      const mine = (list || []).find((l) => String(l.created_by_id || l.user_id) === String(user?.id));
+      setMyLocation(mine);
+      if (mine) {
+        if (mine.emoji) setEmoji(mine.emoji);
+        if (mine.avatar_url) setAvatarUrl(mine.avatar_url);
+        if (mine.sharing_visibility) setSharingVisibility(mine.sharing_visibility);
+        if (mine.sharing_status) setSharingStatus(mine.sharing_status);
+      }
+
+      // Filter visible community locations
+      const activeSosUserIds = (activeSosAlerts || []).map(s => String(s.created_by_id || s.sender_id));
+      const visible = filterVisibleLocations(list || [], user, householdMemberIds, activeSosUserIds);
+      setLocations(visible);
+    } catch (e) {
+      console.error("Failed to load locations:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, householdMemberIds, activeSosAlerts]);
+
+  // Load Hazard Reports
+  const loadHazardReports = useCallback(async () => {
+    try {
+      const reports = await base44.entities.HazardReport.list("-created_date", 500);
+      const withLoc = (reports || []).filter((r) => r.location_lat != null && r.location_lng != null);
+      setHazardReports(withLoc);
+    } catch (e) {
+      console.error("Failed to load hazard reports:", e);
+    }
+  }, []);
+
   // Handler for the "Allow Location" button
   const handleRequestLocation = useCallback(() => {
     const isLocalhost = typeof window !== 'undefined' && (
@@ -445,61 +515,7 @@ export default function CommunityMap() {
     }
   }, [user?.id]);
 
-  // Load Household members for privacy filtering
-  const loadHousehold = useCallback(async () => {
-    if (!user?.household_id) return;
-    try {
-      const hh = await base44.entities.Household.get(user.household_id);
-      if (hh?.member_user_ids) {
-        setHouseholdMemberIds(hh.member_user_ids.map(String));
-      }
-    } catch { /* non-critical */ }
-  }, [user?.household_id]);
-
-  // Load Active SOS alerts
-  const loadSosAlerts = useCallback(async () => {
-    try {
-      const list = await base44.entities.SOSAlert.filter({ status: "active" }, "-created_date", 50);
-      setActiveSosAlerts(list || []);
-    } catch (e) {
-      console.error("Failed to load SOS alerts:", e);
-    }
-  }, []);
-
-  // Load User Locations with opt-in and privacy filtering
-  const loadLocations = useCallback(async () => {
-    try {
-      const list = await base44.entities.UserLocation.list("-updated_date", 500);
-      const mine = (list || []).find((l) => String(l.created_by_id || l.user_id) === String(user?.id));
-      setMyLocation(mine);
-      if (mine) {
-        if (mine.emoji) setEmoji(mine.emoji);
-        if (mine.avatar_url) setAvatarUrl(mine.avatar_url);
-        if (mine.sharing_visibility) setSharingVisibility(mine.sharing_visibility);
-        if (mine.sharing_status) setSharingStatus(mine.sharing_status);
-      }
-
-      // Filter visible community locations
-      const activeSosUserIds = (activeSosAlerts || []).map(s => String(s.created_by_id || s.sender_id));
-      const visible = filterVisibleLocations(list || [], user, householdMemberIds, activeSosUserIds);
-      setLocations(visible);
-    } catch (e) {
-      console.error("Failed to load locations:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, householdMemberIds, activeSosAlerts]);
-
-  // Load Hazard Reports
-  const loadHazardReports = useCallback(async () => {
-    try {
-      const reports = await base44.entities.HazardReport.list("-created_date", 500);
-      const withLoc = (reports || []).filter((r) => r.location_lat != null && r.location_lng != null);
-      setHazardReports(withLoc);
-    } catch (e) {
-      console.error("Failed to load hazard reports:", e);
-    }
-  }, []);
+  // (loadHousehold, loadSosAlerts, loadLocations, loadHazardReports moved above handleRequestLocation)
 
   // Auto-register logged-in user on community map so everyone sees each other immediately
   useEffect(() => {
@@ -728,15 +744,8 @@ export default function CommunityMap() {
           attribution={MAP_STYLES[mapStyle].attribution}
           subdomains={MAP_STYLES[mapStyle].subdomains || "abc"}
           maxZoom={MAP_STYLES[mapStyle].maxZoom || 19}
-          className={MAP_STYLES[mapStyle].filter ? "map-filter" : ""}
         />
-        {MAP_STYLES[mapStyle].filter && (
-          <style>{`
-            .map-filter {
-              filter: ${MAP_STYLES[mapStyle].filter} !important;
-            }
-          `}</style>
-        )}
+        <MapStyleFilter filter={MAP_STYLES[mapStyle].filter} />
 
         {/* Current User Live GPS Location (Private indicator before sharing) */}
         {myRealTimePosition && !myLocation && (
