@@ -118,47 +118,80 @@ function getDeterministicOffset(idStr) {
   return { latOff, lngOff };
 }
 
-function createEmojiIcon(emoji, isMe, isPaused, hasActiveSos = false) {
+function getDistanceMeters(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+  const R = 6371e3; // Earth radius in meters
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function createEmojiIcon(emoji, isMe, isPaused, hasActiveSos = false, name = "") {
   const glow = hasActiveSos
     ? "filter: drop-shadow(0 0 14px #e11d48) drop-shadow(0 0 6px #e11d48);"
-    : (isMe ? "filter: drop-shadow(0 0 8px #2563eb);" : "");
+    : (isMe ? "filter: drop-shadow(0 0 10px #2563eb);" : "filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));");
+  const shortName = name.length > 12 ? name.substring(0, 11) + "…" : name;
+
   return L.divIcon({
     html: `
-      <div style="position:relative; font-size: 32px; line-height: 1; text-align: center; ${glow}">
-        ${emoji}
-        ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; animation:bounce 1s infinite;">🚨</span>' : ''}
-        ${isPaused ? '<span style="position:absolute; bottom:-4px; right:-4px; width:10px; height:10px; border-radius:50%; background:#eab308; border:1.5px solid white;"></span>' : '<span style="position:absolute; bottom:-4px; right:-4px; width:10px; height:10px; border-radius:50%; background:#10b981; border:1.5px solid white;"></span>'}
+      <div style="display:flex; flex-direction:column; align-items:center; pointer-events:auto;">
+        <div style="position:relative; width:40px; height:40px; border-radius:50%; background:rgba(15,23,42,0.85); backdrop-filter:blur(6px); border:2.5px solid ${isMe ? '#3b82f6' : 'rgba(255,255,255,0.7)'}; display:flex; align-items:center; justify-content:center; font-size:22px; ${glow}">
+          ${emoji}
+          ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; animation:bounce 1s infinite;">🚨</span>' : ''}
+          ${isPaused ? '<span style="position:absolute; bottom:-2px; right:-2px; width:11px; height:11px; border-radius:50%; background:#eab308; border:2px solid white;"></span>' : '<span style="position:absolute; bottom:-2px; right:-2px; width:11px; height:11px; border-radius:50%; background:#10b981; border:2px solid white; box-shadow:0 0 6px #10b981;"></span>'}
+        </div>
+        ${shortName ? `
+          <div style="margin-top:3px; background:rgba(15,23,42,0.92); backdrop-filter:blur(6px); color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; border:1px solid rgba(255,255,255,0.25); white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.4); text-align:center; max-width:85px; overflow:hidden; text-overflow:ellipsis;">
+            ${shortName}
+          </div>
+        ` : ''}
       </div>
     `,
     className: "aegis-marker",
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+    iconSize: [40, 58],
+    iconAnchor: [20, 20],
   });
 }
 
-function createPhotoIcon(url, isMe, isPaused, hasActiveSos = false) {
-  const borderColor = hasActiveSos ? "#e11d48" : (isMe ? "#2563eb" : "white");
+function createPhotoIcon(url, isMe, isPaused, hasActiveSos = false, name = "") {
+  const borderColor = hasActiveSos ? "#e11d48" : (isMe ? "#2563eb" : "#0284c7");
   const glow = hasActiveSos
     ? "box-shadow: 0 0 18px #e11d48, 0 0 8px #e11d48;"
-    : (isMe ? "box-shadow: 0 0 12px rgba(37,99,235,0.85);" : "box-shadow: 0 2px 8px rgba(0,0,0,0.35);");
+    : (isMe ? "box-shadow: 0 0 14px rgba(37,99,235,0.9);" : "box-shadow: 0 2px 10px rgba(0,0,0,0.35);");
+  const shortName = name.length > 12 ? name.substring(0, 11) + "…" : name;
+
   return L.divIcon({
     html: `
-      <div style="position:relative; width:40px; height:40px; border-radius:50%; overflow:visible;">
-        <img src="${url}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/initials/svg?seed=AEGIS';" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:3px solid ${borderColor}; ${glow} display:block;"/>
-        ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; line-height:1; filter: drop-shadow(0 0 4px #e11d48);">🚨</span>' : ''}
-        ${isPaused ? '<span style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:#eab308; border:2px solid white;"></span>' : '<span style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:#10b981; border:2px solid white;"></span>'}
+      <div style="display:flex; flex-direction:column; align-items:center; pointer-events:auto;">
+        <div style="position:relative; width:42px; height:42px; border-radius:50%; flex-shrink:0;">
+          <img src="${url}" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || 'AEGIS')}';" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:3px solid ${borderColor}; ${glow} display:block; background:#1e293b;"/>
+          ${hasActiveSos ? '<span style="position:absolute; top:-8px; right:-8px; font-size:14px; line-height:1; filter: drop-shadow(0 0 4px #e11d48); animation:bounce 1s infinite;">🚨</span>' : ''}
+          ${isPaused ? '<span style="position:absolute; bottom:0; right:0; width:12px; height:12px; border-radius:50%; background:#eab308; border:2px solid white;"></span>' : '<span style="position:absolute; bottom:0; right:0; width:12px; height:12px; border-radius:50%; background:#10b981; border:2px solid white; box-shadow:0 0 6px #10b981;"></span>'}
+        </div>
+        ${shortName ? `
+          <div style="margin-top:3px; background:rgba(15,23,42,0.92); backdrop-filter:blur(6px); color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; border:1px solid rgba(255,255,255,0.25); white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.4); text-align:center; max-width:85px; overflow:hidden; text-overflow:ellipsis;">
+            ${shortName}
+          </div>
+        ` : ''}
       </div>
     `,
     className: "aegis-photo-marker",
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
+    iconSize: [42, 60],
+    iconAnchor: [21, 21],
   });
 }
 
 function getMarkerIcon(loc, isMe, hasActiveSos = false) {
   const isPaused = loc.sharing_status === SHARING_STATUS.PAUSED;
-  if (loc.avatar_url) return createPhotoIcon(loc.avatar_url, isMe, isPaused, hasActiveSos);
-  return createEmojiIcon(loc.emoji || "🧍", isMe, isPaused, hasActiveSos);
+  const displayName = isMe ? "You" : (loc.full_name || "Resident");
+  if (loc.avatar_url) return createPhotoIcon(loc.avatar_url, isMe, isPaused, hasActiveSos, displayName);
+  return createEmojiIcon(loc.emoji || "🧍", isMe, isPaused, hasActiveSos, displayName);
 }
 
 function createLivePositionIcon() {
@@ -311,77 +344,33 @@ export default function CommunityMap() {
   // Location permission state: 'checking' | 'granted' | 'denied' | 'prompt' | 'unavailable' | 'insecure_context' | 'dismissed'
   const [locationPermission, setLocationPermission] = useState('checking');
 
+  const [isSimulatingWalk, setIsSimulatingWalk] = useState(false);
   const fileInputRef = useRef(null);
   const mapRef = useRef(null);
+  const watchIdRef = useRef(null);
+  const simIntervalRef = useRef(null);
+  const simStepRef = useRef(0);
+  const lastSavedCoordsRef = useRef(null);
+  const lastSavedTimeRef = useRef(0);
+  const myLocationRef = useRef(null);
+  const sharingVisibilityRef = useRef(sharingVisibility);
+  const emojiRef = useRef(emoji);
+  const avatarUrlRef = useRef(avatarUrl);
 
-  // Check and request geolocation permission on mount
+  useEffect(() => { myLocationRef.current = myLocation; }, [myLocation]);
+  useEffect(() => { sharingVisibilityRef.current = sharingVisibility; }, [sharingVisibility]);
+  useEffect(() => { emojiRef.current = emoji; }, [emoji]);
+  useEffect(() => { avatarUrlRef.current = avatarUrl; }, [avatarUrl]);
+
   useEffect(() => {
-    let cancelled = false;
-
-    async function checkLocationPermission() {
-      // Check if connection is an insecure context on non-localhost (e.g. mobile over http://192.168.x.x)
-      const isLocalhost = typeof window !== 'undefined' && (
-        window.location.hostname === 'localhost' || 
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.endsWith('.localhost')
-      );
-      const isInsecure = typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost;
-
-      if (isInsecure) {
-        if (!cancelled) setLocationPermission('insecure_context');
-        return;
+    return () => {
+      if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
       }
-
-      // Check if geolocation API exists
-      if (!navigator.geolocation) {
-        if (!cancelled) setLocationPermission('unavailable');
-        return;
+      if (simIntervalRef.current) {
+        clearInterval(simIntervalRef.current);
       }
-
-      // Use Permissions API if available (supported on modern browsers)
-      if (navigator.permissions && navigator.permissions.query) {
-        try {
-          const result = await navigator.permissions.query({ name: 'geolocation' });
-          if (!cancelled) {
-            if (result.state === 'granted') {
-              setLocationPermission('granted');
-              // Auto-get position if already granted
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  if (!cancelled) {
-                    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    setMyRealTimePosition(coords);
-                    setFlyTrigger((t) => t + 1);
-                  }
-                },
-                () => {},
-                { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
-              );
-            } else if (result.state === 'denied') {
-              setLocationPermission('denied');
-            } else {
-              // 'prompt' — user hasn't decided yet
-              setLocationPermission('prompt');
-            }
-          }
-          // Listen for permission changes
-          result.addEventListener('change', () => {
-            if (!cancelled) {
-              setLocationPermission(result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'prompt');
-            }
-          });
-        } catch {
-          // Permissions API not supported for geolocation — show prompt banner
-          if (!cancelled) setLocationPermission('prompt');
-        }
-      } else {
-        // No Permissions API — show the prompt banner
-        if (!cancelled) setLocationPermission('prompt');
-      }
-    }
-
-    checkLocationPermission();
-    return () => { cancelled = true; };
+    };
   }, []);
 
   // Load Household members for privacy filtering
@@ -440,6 +429,131 @@ export default function CommunityMap() {
     }
   }, []);
 
+  // Broadcast real-time location update to Base44 and community map
+  const broadcastLocationUpdate = useCallback(async (newCoords, label = null) => {
+    if (!user?.id) return;
+    try {
+      const photo = user.avatar_url || user.imageUrl || avatarUrlRef.current || null;
+      const updated = await startOrUpdateLocationSharing(base44, {
+        user,
+        existingLocationId: myLocationRef.current?.id,
+        position: newCoords,
+        locationLabel: label || myLocationRef.current?.location_label || "Walking on route",
+        visibility: sharingVisibilityRef.current || SHARING_VISIBILITY.COMMUNITY,
+        emoji: photo ? null : (emojiRef.current || "🧍"),
+        avatarUrl: photo,
+      });
+      if (updated) {
+        setMyLocation(updated);
+        myLocationRef.current = updated;
+      }
+    } catch (e) {
+      console.warn("Live broadcast notice:", e?.message);
+    }
+  }, [user]);
+
+  // Start continuous watchPosition for live walking GPS tracking
+  const startLiveTracking = useCallback(() => {
+    if (typeof window === "undefined" || !navigator.geolocation) return;
+
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const newCoords = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          heading: pos.coords.heading,
+          speed: pos.coords.speed,
+        };
+        setMyRealTimePosition(newCoords);
+
+        // Distance & time throttling: only push to backend when moved >= 1.5 meters or 3.5s passed
+        const lastSaved = lastSavedCoordsRef.current;
+        const now = Date.now();
+        const dist = lastSaved ? getDistanceMeters(lastSaved.lat, lastSaved.lng, newCoords.lat, newCoords.lng) : 999999;
+        const timeDiff = now - (lastSavedTimeRef.current || 0);
+
+        if (dist >= 1.5 || timeDiff > 3500) {
+          lastSavedCoordsRef.current = newCoords;
+          lastSavedTimeRef.current = now;
+          await broadcastLocationUpdate(newCoords);
+          loadLocations();
+        }
+      },
+      (err) => {
+        console.warn("watchPosition notice:", err?.message || err);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1500,
+        timeout: 15000,
+      }
+    );
+  }, [broadcastLocationUpdate, loadLocations]);
+
+  // Interactive walk simulation for testing real-time movement between devices/tabs
+  const toggleWalkSimulation = useCallback(() => {
+    if (isSimulatingWalk) {
+      if (simIntervalRef.current) {
+        clearInterval(simIntervalRef.current);
+        simIntervalRef.current = null;
+      }
+      setIsSimulatingWalk(false);
+      startLiveTracking();
+      return;
+    }
+
+    // Stop real watch during simulation so coordinates don't clash
+    if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
+    setIsSimulatingWalk(true);
+
+    const baseLat = myRealTimePosition?.lat || myLocationRef.current?.location_lat || 6.2356;
+    const baseLng = myRealTimePosition?.lng || myLocationRef.current?.location_lng || 125.0286;
+
+    // Organic walking loop around the user's location (~4-6m per step at walking pace)
+    const offsets = [
+      [0.00000, 0.00000],
+      [0.00005, 0.00004],
+      [0.00010, 0.00009],
+      [0.00014, 0.00015],
+      [0.00018, 0.00022],
+      [0.00020, 0.00030],
+      [0.00018, 0.00038],
+      [0.00013, 0.00044],
+      [0.00006, 0.00047],
+      [-0.00001, 0.00045],
+      [-0.00008, 0.00039],
+      [-0.00014, 0.00031],
+      [-0.00017, 0.00021],
+      [-0.00014, 0.00012],
+      [-0.00008, 0.00005],
+      [-0.00003, 0.00001],
+    ];
+
+    simStepRef.current = 0;
+
+    simIntervalRef.current = setInterval(async () => {
+      simStepRef.current = (simStepRef.current + 1) % offsets.length;
+      const [dLat, dLng] = offsets[simStepRef.current];
+      const simCoords = {
+        lat: baseLat + dLat,
+        lng: baseLng + dLng,
+      };
+
+      setMyRealTimePosition(simCoords);
+      await broadcastLocationUpdate(simCoords, "Simulated Walking Route");
+      loadLocations();
+    }, 1200);
+  }, [isSimulatingWalk, myRealTimePosition, startLiveTracking, broadcastLocationUpdate, loadLocations]);
+
   // Handler for the "Allow Location" button
   const handleRequestLocation = useCallback(() => {
     const isLocalhost = typeof window !== 'undefined' && (
@@ -467,21 +581,14 @@ export default function CommunityMap() {
         setMyRealTimePosition(coords);
         setFlyTrigger((t) => t + 1);
 
-        // Synchronize real GPS position with community map
+        // Start continuous walking tracking
+        startLiveTracking();
+
+        // Immediately synchronize real GPS position with community map
         if (user?.id) {
           try {
             const label = await reverseGeocode(coords.lat, coords.lng);
-            const photo = user.avatar_url || user.imageUrl || avatarUrl || null;
-            const updated = await startOrUpdateLocationSharing(base44, {
-              user,
-              existingLocationId: myLocation?.id,
-              position: coords,
-              locationLabel: label,
-              visibility: sharingVisibility || SHARING_VISIBILITY.COMMUNITY,
-              emoji: photo ? null : emoji,
-              avatarUrl: photo,
-            });
-            setMyLocation(updated);
+            await broadcastLocationUpdate(coords, label);
             loadLocations();
           } catch {}
         }
@@ -493,9 +600,78 @@ export default function CommunityMap() {
           setLocationPermission('unavailable');
         }
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
     );
-  }, [user, myLocation?.id, sharingVisibility, emoji, avatarUrl, loadLocations]);
+  }, [user, startLiveTracking, broadcastLocationUpdate, loadLocations]);
+
+  // Check and request geolocation permission on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkLocationPermission() {
+      const isLocalhost = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.localhost')
+      );
+      const isInsecure = typeof window !== 'undefined' && !window.isSecureContext && !isLocalhost;
+
+      if (isInsecure) {
+        if (!cancelled) setLocationPermission('insecure_context');
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        if (!cancelled) setLocationPermission('unavailable');
+        return;
+      }
+
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
+          if (!cancelled) {
+            if (result.state === 'granted') {
+              setLocationPermission('granted');
+              // Automatically start live walking GPS tracking
+              startLiveTracking();
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  if (!cancelled) {
+                    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    setMyRealTimePosition(coords);
+                    setFlyTrigger((t) => t + 1);
+                    broadcastLocationUpdate(coords);
+                  }
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+              );
+            } else if (result.state === 'denied') {
+              setLocationPermission('denied');
+            } else {
+              setLocationPermission('prompt');
+            }
+          }
+          result.addEventListener('change', () => {
+            if (!cancelled) {
+              const state = result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'prompt';
+              setLocationPermission(state);
+              if (state === 'granted') {
+                startLiveTracking();
+              }
+            }
+          });
+        } catch {
+          if (!cancelled) setLocationPermission('prompt');
+        }
+      } else {
+        if (!cancelled) setLocationPermission('prompt');
+      }
+    }
+
+    checkLocationPermission();
+    return () => { cancelled = true; };
+  }, [startLiveTracking, broadcastLocationUpdate]);
 
   const handleDismissLocationBanner = useCallback(() => {
     setLocationPermission('dismissed');
@@ -514,8 +690,6 @@ export default function CommunityMap() {
       if (prefs?.visibility) setSharingVisibility(prefs.visibility);
     }
   }, [user?.id]);
-
-  // (loadHousehold, loadSosAlerts, loadLocations, loadHazardReports moved above handleRequestLocation)
 
   // Auto-register logged-in user on community map so everyone sees each other immediately
   useEffect(() => {
@@ -539,7 +713,15 @@ export default function CommunityMap() {
         const photo = user.avatar_url || user.imageUrl || existing?.avatar_url || null;
         const userEmoji = photo ? null : (existing?.emoji || emoji || "🧍");
 
-        if (!existing || !existing.location_lat || existing.sharing_status !== SHARING_STATUS.ACTIVE) {
+        const needsUpdate = !existing || 
+          !existing.location_lat || 
+          existing.sharing_status !== SHARING_STATUS.ACTIVE ||
+          (myRealTimePosition && (
+            Math.abs(existing.location_lat - myRealTimePosition.lat) > 0.00005 ||
+            Math.abs(existing.location_lng - myRealTimePosition.lng) > 0.00005
+          ));
+
+        if (needsUpdate) {
           const created = await startOrUpdateLocationSharing(base44, {
             user,
             existingLocationId: existing?.id,
@@ -1179,6 +1361,20 @@ export default function CommunityMap() {
                 <LocateFixed className="mr-1 h-3.5 w-3.5" /> Find Me
               </Button>
             )}
+
+            {/* Walk Test Simulation Button */}
+            <Button
+              variant={isSimulatingWalk ? "default" : "outline"}
+              size="sm"
+              onClick={toggleWalkSimulation}
+              className={`clay-card border-0 hover:scale-105 transition-transform text-xs font-semibold px-2.5 sm:px-3 ${
+                isSimulatingWalk ? "bg-amber-600 hover:bg-amber-700 text-white animate-pulse" : ""
+              }`}
+              title="Test real-time walking movement along a path"
+            >
+              🚶 <span className="hidden sm:inline">{isSimulatingWalk ? "Walking... (Stop)" : "Walk Test"}</span>
+              <span className="sm:hidden">{isSimulatingWalk ? "Stop" : "Walk"}</span>
+            </Button>
 
             {/* Share / Settings Button */}
             <Button

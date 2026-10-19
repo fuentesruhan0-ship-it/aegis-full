@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import NotificationBell from "@/components/interactions/NotificationBell";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import GlobalLocationTracker from "@/components/GlobalLocationTracker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -195,6 +196,9 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50/30 via-white to-indigo-50/30 relative">
+      {/* Global background location tracker */}
+      <GlobalLocationTracker />
+
       {/* Radial gradient overlays */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-100/20 via-transparent to-transparent pointer-events-none" />
