@@ -8,7 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import { Bot, Send, Loader2, ShieldCheck, User, WifiOff, AlertCircle, Sparkles, X } from "lucide-react";
 import { generateAIAssistantReply } from "@/lib/aegisAI";
 import { queryGeminiAssistant, isGeminiConfigured } from "@/lib/geminiClient";
-import { queryXKiroAssistant, isXKiroConfigured } from "@/lib/xkiroClient";
+import { queryGroqAssistant, isGroqConfigured } from "@/lib/groqClient";
 
 const SUGGESTIONS = [
   "What should I do during an earthquake?",
@@ -72,10 +72,15 @@ function MessageBubble({ role, content, source }) {
                 <WifiOff className="h-3 w-3 text-amber-500" />
                 <span className="text-amber-600">Offline Emergency Knowledge</span>
               </>
+            ) : source === "groq" ? (
+              <>
+                <Sparkles className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600 font-medium">Live Groq AI (GPT-OSS 120B)</span>
+              </>
             ) : source === "xkiro" ? (
               <>
                 <Sparkles className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-600 font-medium">Live xKiro AI (Qwen)</span>
+                <span className="text-emerald-600 font-medium">Live xKiro AI</span>
               </>
             ) : source === "gemini" ? (
               <>
@@ -141,10 +146,10 @@ export default function Assistant() {
     
     try {
       if (isOnline) {
-        // 1. Prioritize xKiro AI API if configured
-        if (isXKiroConfigured()) {
+        // 1. Prioritize GroqCloud AI API if configured
+        if (isGroqConfigured()) {
           try {
-            const { reply } = await queryXKiroAssistant(
+            const { reply } = await queryGroqAssistant(
               message,
               messages.map((m) => ({ role: m.role, content: m.content }))
             );
@@ -152,13 +157,13 @@ export default function Assistant() {
               setMessages([...newMessages, { 
                 role: "assistant", 
                 content: reply,
-                source: "xkiro"
+                source: "groq"
               }]);
               setGeminiNotice(null);
               return;
             }
-          } catch (xkiroError) {
-            console.warn("xKiro API notice:", xkiroError);
+          } catch (groqError) {
+            console.warn("Groq API notice:", groqError);
           }
         }
 
@@ -277,6 +282,8 @@ export default function Assistant() {
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
           !isOnline
             ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+            : isGroqConfigured()
+            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
             : isXKiroConfigured()
             ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
             : geminiNotice
@@ -289,6 +296,11 @@ export default function Assistant() {
             <>
               <WifiOff className="h-4 w-4" />
               <span>Offline Mode - Cached Knowledge</span>
+            </>
+          ) : isGroqConfigured() ? (
+            <>
+              <Sparkles className="h-4 w-4 text-emerald-600" />
+              <span>Online Mode - Live AI (GroqCloud Active)</span>
             </>
           ) : isXKiroConfigured() ? (
             <>

@@ -43,11 +43,11 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/gemini-api/, '')
       },
-      '/xkiro-api': {
-        target: 'https://api.xkiro.com',
+      '/groq-api': {
+        target: 'https://api.groq.com',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/xkiro-api/, '')
+        rewrite: (path) => path.replace(/^\/groq-api/, '')
       }
     }
   }
