@@ -864,8 +864,8 @@ export default function SOS() {
 
       {/* CONFIRMATION DIALOG */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="sm:max-w-md glass-frosted border-white/50 shadow-2xl">
-          <DialogHeader>
+        <DialogContent className="w-[95vw] sm:max-w-lg glass-frosted border-white/50 shadow-2xl p-6 sm:p-7">
+          <DialogHeader className="sm:text-center flex flex-col items-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 shadow-lg shadow-rose-500/30 text-white">
               <Siren className="h-7 w-7" />
             </div>
@@ -877,7 +877,7 @@ export default function SOS() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 py-2">
+          <div className="space-y-3 py-2 w-full">
             {/* Recipients Preview */}
             <div className="rounded-xl bg-blue-50/80 border border-blue-200 p-3">
               <p className="text-xs font-bold text-blue-900 flex items-center gap-1 mb-1.5">
@@ -909,7 +909,7 @@ export default function SOS() {
                 value={customMessage}
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={2}
-                className="text-xs bg-white/80"
+                className="text-xs bg-white/80 w-full"
               />
             </div>
 
@@ -923,7 +923,7 @@ export default function SOS() {
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col gap-2 pt-2">
+          <DialogFooter className="flex flex-col sm:flex-col sm:space-x-0 gap-2.5 pt-2 w-full">
             {contacts.length > 0 && contacts[0]?.phone && (
               <Button
                 variant="default"
@@ -956,7 +956,7 @@ export default function SOS() {
               <Button
                 variant="outline"
                 onClick={() => setConfirmOpen(false)}
-                className="py-5 text-xs"
+                className="py-5 text-xs px-4"
                 disabled={sending}
               >
                 <X className="mr-1 h-3.5 w-3.5" /> Cancel
